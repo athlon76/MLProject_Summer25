@@ -145,23 +145,74 @@
   </div>
 </section>
 -->
-
-<!-- Paper abstract -->
+<!-- Proposal-->
 <section class="section hero is-light">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-four-fifths">
         <h2 class="title is-3">Proposal</h2>
         <div class="content has-text-justified">
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin ullamcorper tellus sed ante aliquam tempus. Etiam porttitor urna feugiat nibh elementum, et tempor dolor mattis. Donec accumsan enim augue, a vulputate nisi sodales sit amet. Proin bibendum ex eget mauris cursus euismod nec et nibh. Maecenas ac gravida ante, nec cursus dui. Vivamus purus nibh, placerat ac purus eget, sagittis vestibulum metus. Sed vestibulum bibendum lectus gravida commodo. Pellentesque auctor leo vitae sagittis suscipit.
-          </p>
+          <h3>Introduction/Background</h3>
+
+          <h4>Literature Review</h4>
+          <p>With advances in machine learning and deep learning, metastasis prediction across cancers has gained traction using multi-omics, clinical, and imaging data. Botlagunta et al. [1] developed a decision-tree web app leveraging blood profiles and EMRs for metastatic breast cancer (MBC) prediction. Yagin et al. [2] applied explainable AI with SHAP values to highlight key biomarkers, while Duan et al. [3] used transcriptomic data and WGCNA for distant metastasis prediction via random forest models. Talebi et al. [5] focused on gastrointestinal cancers, integrating demographic and clinical variables. Reviews by Petinrin [6] and Albaradei [7] noted the strength of omics-based models but emphasized challenges like data heterogeneity and interpretability. Gao et al. [8] linked genomic alterations to metastasis patterns.</p>
+
+          <h4>Dataset Description</h4>
+          <p><a href="https://www.cbioportal.org/study/summary?id=msk_met_2021"><strong>MSK-MET 2021 Cancer Dataset (Patient Data, Memorial Sloan Kettering)</strong></a> [9] dataset comprises 25,775 metastatic tumor samples with somatic mutations across 341 cancer-related genes, along with annotations like tumor origin and metastasis site. Key features include Hugo_Symbol (gene), Tumor_Sample_Barcode (sample ID), and clinical variables. The output labels are metastasis sites such as bone, brain, and liver.</p>
+
+          <p><a href="https://www.gsea-msigdb.org/gsea/msigdb/human/genesets.jsp?collection=3CA"><strong>MSigDB Curated Cancer Cell Atlas Gene Sets by Gavish <em>et al.</em> (Pathway Gene Data)</strong></a> offers 148 curated gene sets (each with 50 genes) relevant to tumor states. These serve as the basis for our pathway-level representation. Mutated genes from MSK-MET are mapped to these pathways to generate feature vectors.</p>
+
+          <h3>Problem Definition</h3>
+
+          <h4>Problem</h4>
+          <p>Current cancer diagnostics, biopsies, provide limited insight into tumor evolution and often miss critical events that drive metastasis [11]. Because tumors develop heterogeneously and rapidly, undergoing dynamic genetic mutations, metabolic changes, and invasive behaviors, this approach can overlook critical biological alterations, complicating accurate diagnosis and personalized therapy [12]. This is a multi-label classification problem to predict where a tumor will metastasize. Each input sample is represented by a feature vector, a pathway score, and the model outputs a label that represents the site of tumor metastasis. We must also use unsupervised clustering to reduce the feature dimensions and uncover latent structure in the data.</p>
+
+          <h4>Motivation</h4>
+          <p>To address variability across patients and improve reproducibility, analysis of metastatic sites should extend beyond local assessments to include multiple destinations [13], [14]. This broader perspective helps reduce unnecessary medical expenses and the burden of exhaustive biopsies caused by uncertain tumor tropism [15]. By integrating multi-omics data—including genetic, epigenetic, and metastatic site profiles—we aim to achieve more precise tumor classification and effective therapeutic strategies [16], [17].</p>
+
+          <h3>Methods</h3>
+          <ul>
+            <li><strong>Pre-processing:</strong> After standard data cleaning and one-hot encoding, we convert mutated genes into pathway scores (e.g., via ssGSEA). This yields a patient-by-pathway feature matrix.</li>
+            <li><strong>Unsupervised Learning:</strong> Autoencoders (AE) or Variational Autoencoders (VAE) are used to reduce dimensionality. We apply clustering algorithms such as K-Means or GMM to enforce structure and train cluster-aware AEs, extracting embeddings that better capture metastasis profiles.</li>
+            <li><strong>Supervised Learning:</strong> The learned embeddings feed into multi-label classifiers to predict metastasis sites. Comparisons will be made with models trained on full features (e.g., XGBoost, logistic regression) for benchmarking.</li>
+          </ul>
+
+          <h3>Results and Discussion</h3>
+          <ul>
+            <li><strong>Clustering Metrics:</strong> Silhouette score, purity, and normalized cuts are used to evaluate clustering and guide AE training:<br>
+              <code>L<sub>total</sub> = L<sub>recon</sub> + λL<sub>cluster</sub></code>
+            </li>
+            <li><strong>Evaluation:</strong> Multi-label classification is assessed using Hamming loss, micro/macro F1 scores, and Precision@k. Results from pre-trained AE models are compared to baseline models using raw features.</li>
+            <li><strong>Expected Outcome:</strong> By enforcing biologically informed latent structure, we aim for improved performance over baseline models. For single-label metastasis prediction, we anticipate cluster-driven models achieving ≥ 0.8 accuracy. Multi-label performance is expected to remain competitive, especially for primary site prediction.</li>
+          </ul>
+
+          <h3>References</h3>
+          <ol>
+            <li>M. Botlagunta et al., “Classification and diagnostic prediction of breast cancer metastasis on clinical data using machine learning algorithms,” <em>Sci. Rep.</em>, vol. 13, no. 1, p. 485, Jan. 2023.</li>
+            <li>B. Yagin et al., “Cancer metastasis prediction and genomic biomarker identification through machine learning and eXplainable artificial intelligence in breast cancer research,” <em>Diagnostics</em>, vol. 13, no. 21, p. 3314, Oct. 2023.</li>
+            <li>H. Duan et al., “Machine learning-based prediction model for distant metastasis of breast cancer,” <em>Comput. Biol. Med.</em>, vol. 169, p. 107943, Jan. 2024.</li>
+            <li>A. Talebi et al., “Predicting metastasis in gastric cancer patients: machine learning-based approaches,” <em>Sci. Rep.</em>, vol. 13, no. 1, p. 4163, Dec. 2023.</li>
+            <li>R. Talebi et al., “Machine learning-based classifiers to predict metastasis in colorectal cancer patients,” <em>Front. Artif. Intell.</em>, vol. 7, p. 1285037, Jan. 2024.</li>
+            <li>O. O. Petinrin et al., “Machine learning in metastatic cancer research: Potentials, possibilities, and prospects,” <em>Comput. Struct. Biotechnol. J.</em>, vol. 21, pp. 2454–2470, Mar. 2023.</li>
+            <li>S. Albaradei et al., “Machine learning and deep learning methods that use omics data for metastasis prediction,” <em>Comput. Struct. Biotechnol. J.</em>, vol. 19, pp. 5008–5018, Sep. 2021.</li>
+            <li>J. Gao et al., "Integrative analysis of complex cancer genomics and clinical profiles using the cBioPortal," <em>Sci. Signal.</em>, vol. 6, no. 269, p. pl1, 2013.</li>
+            <li>M. Rudin and R. Weissleder, “Molecular imaging in drug discovery and development,” <em>Nat. Rev. Drug Discov.</em>, vol. 2, no. 2, pp. 123–131, Feb. 2003.</li>
+            <li>The Broad Institute, "MSigDB: Molecular Signatures Database," <a href="https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp">[Accessed: Jun. 13, 2025]</a>.</li>
+            <li>D. Sengupta and G. Pratx, “Imaging metabolic heterogeneity in cancer,” <em>Mol. Cancer</em>, vol. 15, Art. no. 4, 2016.</li>
+            <li>B. Nguyen et al., "Genomic characterization of metastatic patterns from prospective clinical sequencing of 25,000 patients," <em>Cell</em>, vol. 185, no. 3, pp. 563–575.e11, Feb. 2022.</li>
+            <li>Y. Sun et al., "Integrated multi-omics profiling to dissect the spatiotemporal evolution of metastatic hepatocellular carcinoma," <em>Cancer Cell</em>, vol. 42, no. 1, pp. 135–156.e17, Jan. 2024.</li>
+            <li>X. Zhang et al., "Multi-omics with dynamic network biomarker algorithm prefigures organ-specific metastasis of lung adenocarcinoma," <em>Nature Communications</em>, vol. 15, no. 1, article 9855, 2024.</li>
+            <li>C. Caballero et al., "International research to address the challenges of metastatic breast cancer: the AURORA Program (BIG 14-01)," <em>NPJ Breast Cancer</em>, vol. 9, article 42, 2023.</li>
+            <li>M. L. Ludwig et al., "Integrated multi-omics assessment of lineage plasticity in a prostate cancer patient with brain and dural metastases," <em>NPJ Precision Oncology</em>, vol. 8, article 215, 2024.</li>
+            <li>D. Akhoundova et al., "Clinical application of advanced multi-omics tumor profiling: Shaping precision oncology of the future," <em>Cancer Cell</em>, vol. 40, no. 9, pp. 920–938, Sep. 2022.</li>
+          </ol>
         </div>
       </div>
     </div>
   </div>
 </section>
-<!-- End paper abstract -->
+<!-- Proposal -->
+
 
 <!-- Image Carousel
 <section class="hero is-small">
