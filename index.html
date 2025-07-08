@@ -509,7 +509,20 @@ and predictive modeling.
           
           <p><small><sup>*</sup>GMM ARI for MSK-MET was 1.0 when all samples collapsed into a single cluster (pathological case), and 0.0 in a two-class setting. Silhouette Score was not computed due to lack of cluster diversity.</small></p>
 
-
+          <h4>Next Steps</h4>
+          <p>
+            Given the high classification performance across models (Random Forest, XGBoost, and two fully connected layers), we aim to further validate and interpret the results through the following steps.
+First, we will refine the training pipeline by implementing a three-way data split with proportions of 64% for training, 16% for validation, and 20% for testing. Additionally, we will incorporate
+5-fold cross-validation to assess the robustness and generalizability of each model and reduce the risk of overfitting.
+            To enhance biological interpretability—particularly in the context of brain cancer metasta-
+sis—we will move beyond reliance on canonical markers to identify cell clusters. Specifically, we plan to investigate feature importance using tree-based models (Random Forest and XGBoost) in
+conjunction with SHAP (SHapley Additive exPlanations) analysis. This approach will enable us not only to rank predictive features but also to understand the directionality and contribution of
+each feature in determining cell identity.
+            Furthermore, we plan to incorporate <strong>Variational Autoencoders (VAEs)</strong> to capture latent representations of the gene expression profiles. By learning a compressed, probabilistic embedding of
+the transcriptomic landscape, VAEs can uncover underlying biological structure and heterogeneity among cells. We will compare the latent space learned by VAEs with that derived from PCA or
+UMAP to assess its utility for clustering and classification, as well as its potential to improve model interpretability and performance in downstream tasks.
+          </p>
+          
           <!-- ===================================================== -->
           <!--  REFERENCES                                           -->
           <!-- ===================================================== -->
