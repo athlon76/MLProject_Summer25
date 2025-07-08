@@ -262,44 +262,48 @@
 
           <h4>Proposed Approach</h4>
           <ul>
-            <li><strong>Pre-processing:</strong> After standard data cleaning and one-hot encoding, mutated genes are converted into pathway scores (for example via ssGSEA), yielding a patient-by-pathway feature matrix.</li>
-            <li><strong>Unsupervised Learning:</strong> Autoencoders (AE) or Variational Autoencoders (VAE) reduce dimensionality. Clustering algorithms such as K-Means or Gaussian Mixture Models (GMM) enforce structure, training cluster-aware AEs that extract embeddings better capturing metastasis profiles.</li>
-            <li><strong>Supervised Learning:</strong> The learned embeddings feed multi-label classifiers to predict metastasis sites. Comparisons are made with models trained on full features (for example XGBoost or logistic regression) for benchmarking.</li>
+            <li><strong>Pre-processing:</strong> After standard data cleaning and one-hot encoding, we convert mutated genes into pathway scores (e.g., via ssGSEA). This yields a patient-by-pathway feature matrix..</li>
+            <li><strong>Unsupervised Learning:</strong> Autoencoders (AE) or Variational Autoencoders (VAE) are used to reduce dimensionality. We apply clustering algorithms such as K-Means or GMM to enforce structure and train cluster-aware AEs, extracting embeddings that better capture metastasis profiles. </li>
+            <li><strong>Supervised Learning:</strong> The learned embeddings feed into multi-label classifiers to predict metastasis sites. Comparisons will be made with models trained on full features (e.g., XG-Boost, logistic regression) for benchmarking.</li>
           </ul>
 
           <h4>Revised Approach</h4>
           <ul>
-            <li><strong>Label Processing:</strong> Many samples were missing valid metastatic-site labels—either marked as <code>NaN</code>, <code>False</code>, or <code>unspecified</code>. These were consolidated under a “Non-metastatic” category. Labels were also grouped by organ system for UMAP visualisation only.</li>
-            <li><strong>Dimensionality Reduction and Clustering:</strong> Principal-component analysis (PCA) reduced dimensionality, followed by UMAP for 2-D visualisation. K-Means, DBSCAN, and GMM clustering were evaluated with Adjusted Rand Index (ARI) and Silhouette Score. All metrics indicated poor clustering quality, suggesting weak biological signal in the features.</li>
-            <li><strong>Supervised Classification:</strong> One-vs-One binary classifiers using Random Forest and XGBoost were trained on the PCA-reduced feature space to mitigate class imbalance. Overall classification performance remained weak due to noisy and sparse features.</li>
+            <li><strong>Label Processing:</strong> Many samples were missing valid metastatic-site labels—either marked as <code>NaN</code>, <code>False</code>, or <code>unspecified</code>. These were consolidated under a “Non-metastatic” category. Additionally, labels were grouped by organ system to help coarsen the label space and assist later visualization. However, this grouping was only used during UMAP
+visualization and not for supervised training.</li>
+            <li><strong>Dimensionality Reduction and Clustering:</strong> PCA was applied to reduce the feature dimensionality, followed by UMAP to project data into 2D space for visualization. We tested clustering methods including KMeans, DBSCAN, and GMM, and evaluated them using Adjusted Rand Index (ARI) and Silhouette Score. Clustering performance was poor across all metrics, indicating lack of biological signal in the features.</li>
+            <li><strong>Supervised Classification:</strong> Due to the class imbalance and multi-label nature of the dataset, we trained a series of one-vs-one (OvO) binary classifiers using both Random Forest and XGBoost. Each classifier was trained to distinguish between two metastatic sites using the PCA-reduced feature space. This approach was selected to reduce the effect of class imbalance and improve per-class resolution, though overall classification performance remained weak due to the noisy feature representation.</li>
           </ul>
 
           <h4>Pivoted Approach: scRNA-seq-based Feature Embedding and Clustering</h4>
           <p>
-            Due to limitations of the original MSK-MET mutation-derived dataset, we pivoted to a richer dataset: the single-cell RNA-sequencing dataset <strong>GSE278688</strong>. The filtered data contained 72 653 single cells, each annotated with a curated cell-type label (for example Immune Cell, Fibroblast, Mast Cell).
+            Due to the limitations of the original MSK-MET mutation-derived dataset, we pivoted to a new dataset with more robust and continuous features: a single-cell RNA-sequencing dataset from GEO (accession <strong>GSE278688</strong>). This dataset provides gene expression matrices with accompanying cell
+type labels.
           </p>
           <ul>
-            <li><strong>Pre-processing and PCA:</strong> Using the Seurat pipeline, raw expression matrices were filtered, normalised, log-scaled, and reduced to 50 principal components, which were exported for downstream analysis.</li>
-            <li><strong>Unsupervised Clustering:</strong> In Python, UMAP projected the 50-D PCA embeddings to 2-D. K-Means, DBSCAN, and GMM clustering were evaluated using ARI, Silhouette Score, and Davies–Bouldin Index against known cell-type labels.</li>
-            <li><strong>Supervised Classification:</strong> Random Forest, XGBoost, and a shallow two-layer fully connected neural network (2 FC) were trained on the PCA embeddings. Macro F1-scores approached 0.99.</li>
+            <li><strong>Pre-processing and PCA:</strong> Raw expression matrices and metadata were processed using the Seurat pipeline in R, which included filtering low-quality cells, normalization, log-scaling, and dimensionality reduction via PCA. The resulting PCA embeddings (50 dimensions per cell) were exported for downstream analysis.</li>
+            <li><strong>Unsupervised Clustering:</strong> In Python, we applied UMAP to project the 50-dimensional PCA embeddings into 2D space. We tested clustering using KMeans, DBSCAN, and GMM, and evaluated their performance using Adjusted Rand Index (ARI), Silhouette Score, and Davies-Bouldin Index against known cell type labels.</li>
+            <li><strong>Supervised Classification:</strong> Using cell type labels as ground truth, we trained both Random Forest and XGBoost classifiers to test how well these PCA-reduced embeddings could distinguish between cell types. Cross-validation and macro F1-scores were used for evaluation.</li>
           </ul>
 
           <h4>Model Implementation Details</h4>
 
           <h5>Dimensionality Reduction (UMAP)</h5>
+          <p>UMAP was applied to the 50-dimensional PCA embeddings with the following parameters:</p>
           <p><code>n_neighbors&nbsp;=&nbsp;30;</code> <code>min_dist&nbsp;=&nbsp;0.3;</code> <code>metric&nbsp;=&nbsp;"cosine";</code> <code>n_components&nbsp;=&nbsp;2;</code> <code>random_state&nbsp;=&nbsp;42</code></p>
 
           <h5>Fully Connected Neural Network (2 FC Layers)</h5>
+          <p>We tested a shallow feedforward network with two fully connected (FC) layers:</p>
           <p>
             Architecture: <code>FC(50) → ReLU → FC(32) → ReLU → FC(5) + softmax</code><br>
-            Optimizer: Adam Learning rate: 0.001 Epochs: 50 Batch size: 128
+            Optimizer: Adam; Learning rate: 0.001; Epochs: 50; Batch size: 128
           </p>
 
           <h5>Random Forest (RF)</h5>
-          <p>Number of trees: 100 Maximum depth: None Criterion: Gini impurity Class weight: balanced Random state: 42</p>
+          <p>Number of trees: 100; Maximum depth: None; Criterion: Gini impurity; Class weight: balanced random state: 42</p>
 
           <h5>XGBoost (XGB)</h5>
-          <p>Estimators: 100 Max depth: 3 Learning rate: 0.1 Objective: <code>multi:softprob</code> Evaluation metric: <code>logloss</code> Random state: 42</p>
+          <p>Estimators: 100; Max depth: 3; Learning rate: 0.1; Objective: <code>multi:softprob</code>; Evaluation metric: <code>logloss</code>; Random state: 42</p>
 
           <!-- ===================================================== -->
           <!--  RESULTS AND DISCUSSION                               -->
@@ -383,7 +387,7 @@
           <figure>
             <img src="static/images/pca_embedding_scrnaseq.png"           alt="PCA embedding scRNA-seq">
             <img src="static/images/UMAP_PCA_reduced_scrnaseq.png"        alt="UMAP PCA scRNA-seq">
-            <figcaption>Left: PCA embedding of the scRNA-seq dataset across 72 653 cells. Right: UMAP projection of PCA-reduced scRNA-seq data annotated with curated cell type labels: Immune, endothelial, fibroblast, and mast cells form well-separated clusters, validating the biological structure. </figcaption>
+            <figcaption>Up: PCA embedding of the scRNA-seq dataset across 72 653 cells. Down: UMAP projection of PCA-reduced scRNA-seq data annotated with curated cell type labels: Immune, endothelial, fibroblast, and mast cells form well-separated clusters, validating the biological structure. </figcaption>
           </figure>
           <figure>
             <img src="static/images/Kmeans_cluster_scrnaseq.png"          alt="K-Means clustering scRNA-seq">
@@ -392,7 +396,7 @@
           <figure>
             <img src="static/images/GMM_cluster_scrnaseq.png"             alt="GMM clustering scRNA-seq">
             <img src="static/images/GMM_density_scrnaseq.png"             alt="GMM density scRNA-seq">
-            <figcaption>Left: GMM clustering applied to PCA-reduced scRNA-seq embeddings. Five broad clusters emerge, capturing high-level transcriptional states. Right: GMM density contours show the learned Gaussian distributions. Some overlap exists, but major clusters remain well-separated.</figcaption>
+            <figcaption>Up: GMM clustering applied to PCA-reduced scRNA-seq embeddings. Five broad clusters emerge, capturing high-level transcriptional states. Down: GMM density contours show the learned Gaussian distributions. Some overlap exists, but major clusters remain well-separated.</figcaption>
           </figure>
           <figure>
             <img src="static/images/DBSCAN_cluster_scrnaseq.png"          alt="DBSCAN clustering scRNA-seq">
