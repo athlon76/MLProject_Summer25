@@ -290,21 +290,41 @@ type labels.
 
           <h5>Dimensionality Reduction (UMAP)</h5>
           <p>UMAP was applied to the 50-dimensional PCA embeddings with the following parameters:</p>
-          <p><code>n_neighbors&nbsp;=&nbsp;30;</code> <code>min_dist&nbsp;=&nbsp;0.3;</code> <code>metric&nbsp;=&nbsp;"cosine";</code> <code>n_components&nbsp;=&nbsp;2;</code> <code>random_state&nbsp;=&nbsp;42</code></p>
-
+          <ul>
+            <li><code>n_neighbors = 30;</code></li>
+            <li><code>min_dist = 0.3;</code></li>
+            <li><code>metric = "cosine";</code></li>
+            <li><code>n_components = 2;</code></li>
+            <li><code>random_state = 42</code></li>
+          </ul>
           <h5>Fully Connected Neural Network (2 FC Layers)</h5>
           <p>We tested a shallow feedforward network with two fully connected (FC) layers:</p>
-          <p>
-            Architecture: <code>FC(50) → ReLU → FC(32) → ReLU → FC(5) + softmax</code><br>
-            Optimizer: Adam; Learning rate: 0.001; Epochs: 50; Batch size: 128
-          </p>
+          <ul>
+            <li>Architecture: <code>FC(50) → ReLU → FC(32) → ReLU → FC(5) + softmax</code></li>
+            <li>Optimizer: Adam</li>
+            <li>Learning rate: 0.001</li>
+            <li>Epochs: 50</li>
+            <li>Batch size: 128</li>
+          </ul>
 
           <h5>Random Forest (RF)</h5>
-          <p>Number of trees: 100; Maximum depth: None; Criterion: Gini impurity; Class weight: balanced random state: 42</p>
+          <ul>
+            <li>Number of trees: 100</li>
+            <li>Maximum depth: None</li>
+            <li>Criterion: Gini impurity</li>
+            <li>Class weight: balanced</li>
+            <li>Random state: 42</li>
+          </ul>
 
           <h5>XGBoost (XGB)</h5>
-          <p>Estimators: 100; Max depth: 3; Learning rate: 0.1; Objective: <code>multi:softprob</code>; Evaluation metric: <code>logloss</code>; Random state: 42</p>
-
+          <ul>
+            <li>Estimators: 100</li>
+            <li>Max depth: 3</li>
+            <li>Learning rate: 0.1</li>
+            <li>Objective: <code>multi:softprob</code></li>
+            <li>Evaluation metric: <code>logloss</code></li>
+            <li>Random state: 42</li>
+          </ul>
           <!-- ===================================================== -->
           <!--  RESULTS AND DISCUSSION                               -->
           <!-- ===================================================== -->
