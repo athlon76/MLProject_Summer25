@@ -310,35 +310,44 @@
           <ul>
             <li><strong>Clustering Metrics:</strong> Silhouette Score, purity, and normalized-cut metrics are used to evaluate clustering and guide AE training: <code>L<sub>total</sub>&nbsp;=&nbsp;L<sub>recon</sub>&nbsp;+&nbsp;λ&nbsp;L<sub>cluster</sub></code></li>
             <li><strong>Evaluation:</strong> Multi-label classification is assessed using Hamming Loss, micro/macro F1-Scores, and Precision@k. Results from pre-trained AE models are compared with baseline models using raw features.</li>
-            <li><strong>Expected Outcome:</strong> Enforcing biologically informed latent structure should yield accuracy ≥ 0.8 for single-label metastasis prediction. Multi-label performance should remain competitive for primary-site prediction.</li>
+            <li><strong>Expected Outcome:</strong> By enforcing biologically informed latent structure, we aim for improved performance over baseline models. For single-label metastasis prediction, we anticipate cluster-driven models achieving accuracy greater than 0.8. Multi-label performance is expected to remain competitive, especially for primary site prediction.</li>
           </ul>
 
           <h4>Initial Challenges</h4>
+          <p>
+            Our initial dataset was constructed by integrating two sources: clinical gene mutation data from <strong>MSK-MET 2021 Cancer Dataset</strong> and pathway annotations from <strong>MSigDB Cancer Cell Atlas Gene Sets</strong> and <strong>KEGG PATHWAY Database</strong>. Each sample's mutated genes were mapped to 35,626 curated gene sets to produce binary pathway activation vectors. However, this mapping process revealed critical issues.
+          </p>
           <ul>
-            <li><strong>Label sparsity:</strong> Out of 2 151 patient samples, 1 420 (66 %) lacked valid metastatic-site labels.</li>
-            <li><strong>Feature sparsity:</strong> Although each sample could have up to 35 626 pathway features, most (8 757) had fewer than 10 non-zero values, causing overfitting and noise.</li>
+            <li><strong>Label sparsity:</strong> Out of 2 151 patient samples, 1 420 (66 %) had missing, false, or “unspecified” metastatic site labels. This significantly limited usable training data for supervised tasks.</li>
+            <li><strong>Feature sparsity:</strong> Although each sample could have up to 35 626 pathway features, most (8 757) had fewer than 10 non-zero values. Because this is mostly non-informative data, the model could not be trained effectively. This resulted in overfitting and high noise.</li>
             <li><strong>Class imbalance:</strong> Label distribution was highly skewed: lymph (319), bone (208), liver (91), while many sites had only 1–3 samples.</li>
           </ul>
 
           <!--  UNSUPERVISED LEARNING PERFORMANCE FIGURES -->
           <h4>Unsupervised Learning and Clustering Performance</h4>
+          <p>
+            To understand the intrinsic structure of the data, we performed dimensionality reduction (PCA followed by UMAP) and applied clustering algorithms. UMAP visualization showed visually separated clusters, but these did not correlate with either metastatic site or organ system groupings. In short, clustering failed to align meaningfully with known metastasis labels:       
+          </p>
           <figure>
             <img src="static/images/Kmeans_cluster_nonmetastatic_vs_all.png" alt="K-Means clustering: Non-metastatic vs All">
             <img src="static/images/Kmeans_density_nonmetastatic_vs_all.png" alt="K-Means density: Non-metastatic vs All">
-            <figcaption>K-Means: ARI = 0.004, Silhouette = 0.89 – tight clusters without label alignment.</figcaption>
+            <figcaption>K-Means: ARI = 0.004, Silhouette = 0.89 – While the clusters appeared internally tight, they did not align well with known metastasis site labels.</figcaption>
           </figure>
           <figure>
             <img src="static/images/GMM_cluster_nonmetastatic_vs_all.png" alt="GMM clustering: Non-metastatic vs All">
             <img src="static/images/GMM_density_nonmetastatic_vs_all.png" alt="GMM density: Non-metastatic vs All">
-            <figcaption>GMM collapsed into a single cluster in one case (ARI = 1.0) or failed to separate classes (ARI = 0).</figcaption>
+            <figcaption>GMM collapsed into a single cluster in one case (ARI = 1.0) or failed to separate classes (ARI = 0). This indicated poor mode separation and possible convergence failure due to the flatness of the feature space.</figcaption>
           </figure>
           <figure>
             <img src="static/images/DBSCAN_density_nonmetastatic_vs_all.png" alt="DBSCAN density: Non-metastatic vs All">
-            <figcaption>DBSCAN: ARI = 0.064, Silhouette = −0.132 – clusters of poor cohesion.</figcaption>
+            <figcaption>DBSCAN: ARI = 0.064, Silhouette = −0.132 – The negative silhouette score confirmed poor clustering quality and cohesion.</figcaption>
           </figure>
 
           <!--  SUPERVISED LEARNING PERFORMANCE FIGURES -->
           <h4>Supervised Learning Performance</h4>
+          <p>
+            Below are UMAP projections of OvO comparisons: Non-Metastatic vs Canonical, Digestive, Endocrine, Lymphatic/Immune, Nervous, Reproductive, Respiratory, Skeletal, and Urinary.
+          </p>
           <div class="columns is-multiline is-mobile">
             <div class="column is-one-third"><img src="static/images/UMAP_canonical.png"     alt="UMAP canonical"></div>
             <div class="column is-one-third"><img src="static/images/UMAP_digestive.png"     alt="UMAP digestive"></div>
@@ -353,6 +362,12 @@
 
           <!--  TRANSITION TO SCRNA-SEQ -->
           <h4>Transition to scRNA-seq Dataset</h4>
+          <p>
+            The limitations of the MSK-MET mutation-based feature space prompted a pivot to a more robust and information-rich dataset: GSE278688, a single-cell RNA-seq dataset. This provided a more balanced label distribution (e.g., across cell types), continuous expression-derived features (in contrast to sparse binary vectors), and improved intrinsic clustering structure, as revealed by unsupervised methods.
+          </p>
+          <p>
+            <strong>Clustering Results</strong>: Using PCA embeddings (50 components), UMAP revealed distinct groupings of cells by type. KMeans and DBSCAN produced clusters with much stronger alignment to the known cell type labels (as measured by ARI and silhouette scores), compared to the mutation-derived data. This supports the idea that transcriptional states provide more discriminative information for unsupervised learning.
+          </p>
           <table class="table is-fullwidth is-striped">
             <caption>Clustering performance metrics on PCA-reduced scRNA-seq embeddings</caption>
             <thead>
@@ -368,23 +383,28 @@
           <figure>
             <img src="static/images/pca_embedding_scrnaseq.png"           alt="PCA embedding scRNA-seq">
             <img src="static/images/UMAP_PCA_reduced_scrnaseq.png"        alt="UMAP PCA scRNA-seq">
-            <figcaption>Left: PCA embeddings of scRNA-seq data. Right: UMAP projections annotated by curated cell-type labels.</figcaption>
+            <figcaption>Left: PCA embedding of the scRNA-seq dataset across 72 653 cells. Right: UMAP projection of PCA-reduced scRNA-seq data annotated with curated cell type labels: Immune, endothelial, fibroblast, and mast cells form well-separated clusters, validating the biological structure. </figcaption>
           </figure>
           <figure>
             <img src="static/images/Kmeans_cluster_scrnaseq.png"          alt="K-Means clustering scRNA-seq">
-            <figcaption>K-Means clustering (<em>k</em> = 5) on PCA-reduced scRNA-seq embeddings.</figcaption>
+            <figcaption>KMeans clustering with (<em>k</em> = 5) on PCA-reduced scRNA-seq embeddings. Tight clusters are formed, though biological interpretability is limited without labels.</figcaption>
           </figure>
           <figure>
             <img src="static/images/GMM_cluster_scrnaseq.png"             alt="GMM clustering scRNA-seq">
             <img src="static/images/GMM_density_scrnaseq.png"             alt="GMM density scRNA-seq">
-            <figcaption>GMM clustering (five Gaussians) and corresponding density contours on PCA-reduced embeddings.</figcaption>
+            <figcaption>Left: GMM clustering applied to PCA-reduced scRNA-seq embeddings. Five broad clusters emerge, capturing high-level transcriptional states. Right: GMM density contours show the learned Gaussian distributions. Some overlap exists, but major clusters remain well-separated.</figcaption>
           </figure>
           <figure>
             <img src="static/images/DBSCAN_cluster_scrnaseq.png"          alt="DBSCAN clustering scRNA-seq">
-            <figcaption>DBSCAN clustering on PCA-reduced scRNA-seq embeddings (ε = 0.4, <em>min_samples</em> = 40).</figcaption>
+            <figcaption>DBSCAN clustering on PCA-reduced scRNA-seq embeddings. Distinct clusters emerge,
+though sensitivity to noise is evident with the chosen parameters (ϵ = 0.4, <em>min_samples</em> = 40).</figcaption>
           </figure>
 
           <h4>Classification Results</h4>
+          <p>
+            <strong>Classification Results</strong>: Supervised classification using Random Forest and XGBoost on the PCA features yielded macro F1 scores significantly higher than those from the mutation-based models. This suggests that scRNA-seq-derived embeddings are better suited for both class separation
+and predictive modeling.
+          </p>
           <table class="table is-narrow">
             <thead>
               <tr><th>Model</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Accuracy</th></tr>
@@ -397,15 +417,12 @@
           </table>
           <figure>
             <img src="static/images/Training_accuracy_and_loss.png" alt="Training accuracy and loss">
-            <figcaption>Training accuracy (blue, left axis) and loss (red, right axis) over 50 epochs.</figcaption>
+            <figcaption>Training accuracy and loss over 50 epochs. Accuracy (blue, left axis) steadily increases and saturates near 1.0, while loss (red, right axis) decreases exponentially, indicating effective model convergence during training.</figcaption>
           </figure>
 
           <h4>Initial Conclusion</h4>
           <p>
-            This pivot validated the importance of dataset selection and representation.
-            The MSK-MET mutation-derived data were extremely sparse and imbalanced, which impeded effective modeling.
-            In contrast, the scRNA-seq dataset enabled extraction of biologically meaningful structure, leading to markedly better clustering and nearly perfect classification.
-            Future work will refine embeddings, explore transfer learning from cell-type to metastasis prediction, and expand benchmarking against existing models.
+            This pivot validated the importance of dataset selection and representation, particularly in domains where feature sparsity and label imbalance fundamentally limit model performance. While the original mutation-derived dataset offered a pathway-informed view of metastatic tropism, its extreme sparsity and label imbalance ultimately made effective modeling infeasible. In contrast, the scRNA-seq dataset enabled us to extract biologically meaningful structure and significantly improve both clustering and classification outcomes. Moving forward, we plan to refine the embeddings further, explore transfer learning from cell type to metastasis prediction, and expand our benchmarking against existing models.
           </p>
 
           <!-- ===================================================== -->
