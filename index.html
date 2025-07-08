@@ -282,10 +282,18 @@ visualization and not for supervised training.</li>
 type labels.
           </p>
           <ul>
-            <li><strong>Pre-processing and PCA:</strong> Raw expression matrices and metadata were processed using the Seurat pipeline in R, which included filtering low-quality cells, normalization, log-scaling, and dimensionality reduction via PCA. The resulting PCA embeddings (50 dimensions per cell) were exported for downstream analysis.</li>
+            <li><strong>Pre-processing and PCA:</strong>  Raw expression matrices and metadata were processed using the Seurat pipeline in R, which included filtering low-quality cells, normalization, log-scaling, and dimensionality reduction via PCA. Briefly, we calculated the percentage of mitochondrial gene expression for each cell using the <strong>PercentageFeatureSet()</strong> function with the pattern <strong>^MT-</strong>, which captures mitochondrial genes. We then filtered out low-quality cells by subsetting for those with more than 200 and fewer than 2,500 detected genes (<strong>nFeature_RNA</strong>), and with less than 5\% mitochondrial content (<strong>percent.mt</strong>).
+            Normalization was performed using <strong>NormalizeData()</strong>, which applies a log-normalization method to standardize expression levels across cells and account for differences in sequencing depth.
+            Principal Component Analysis (PCA) was conducted on highly variable genes identified using <strong>VariableFeatures()</strong>. PCA was run via <strong>RunPCA()</strong>, and the results were visualized using <strong>DimPlot()</strong>strong> with <strong>reduction = "pca"</strong>strong>. The resulting PCA embeddings (50 dimensions per cell) were exported for downstream analysis.
+            
+            </li>
             <li><strong>Unsupervised Clustering:</strong> In Python, we applied UMAP to project the 50-dimensional PCA embeddings into 2D space. We tested clustering using KMeans, DBSCAN, and GMM, and evaluated their performance using Adjusted Rand Index (ARI), Silhouette Score, and Davies-Bouldin Index against known cell type labels.</li>
             <li><strong>Supervised Classification:</strong> Using cell type labels as ground truth, we trained both Random Forest and XGBoost classifiers to test how well these PCA-reduced embeddings could distinguish between cell types. Cross-validation and macro F1-scores were used for evaluation.</li>
           </ul>
+
+          <p>
+              The filtered dataset used for modeling contained 72,653 single cells, each annotated with a unique cell barcode and a manually curated cluster label corresponding to immune cell subtypes such as Immune Cell, Fibroblast, or Mast Cell.
+          </p>
 
           <h4>Model Implementation Details</h4>
 
@@ -299,32 +307,41 @@ type labels.
             <li><code>random_state = 42</code></li>
           </ul>
           <h5>Fully Connected Neural Network (2 FC Layers)</h5>
-          <p>We tested a shallow feedforward network with two fully connected (FC) layers:</p>
           <ul>
-            <li>Architecture: <code>FC(50) → ReLU → FC(32) → ReLU → FC(5) + softmax</code></li>
-            <li>Optimizer: Adam</li>
-            <li>Learning rate: 0.001</li>
-            <li>Epochs: 50</li>
-            <li>Batch size: 128</li>
+            <li><code>hidden_layer_sizes</code>: (50, 32)</li>
+            <li><code>activation</code>: 'relu'</li>
+            <li><code>solver</code>: 'adam'</li>
+            <li><code>learning_rate_init</code>: 0.001</li>
+            <li><code>learning_rate</code>: 'constant'</li>
+            <li><code>alpha</code>: 0.0001</li>
+            <li><code>batch_size</code>: 128</li>
+            <li><code>max_iter</code>: 50</li>
+            <li><code>early_stopping</code>: False</li>
+            <li><code>shuffle</code>: True</li>
+            <li><code>random_state</code>: 42</li>
           </ul>
-
           <h5>Random Forest (RF)</h5>
           <ul>
-            <li>Number of trees: 100</li>
-            <li>Maximum depth: None</li>
-            <li>Criterion: Gini impurity</li>
-            <li>Class weight: balanced</li>
-            <li>Random state: 42</li>
+            <li><code>n_estimators</code>: 100</li>
+            <li><code>criterion</code>: 'gini'</li>
+            <li><code>max_depth</code>: None</li>
+            <li><code>min_samples_split</code>: 2</li>
+            <li><code>min_samples_leaf</code>: 1</li>
+            <li><code>max_features</code>: 'sqrt'</li>
+            <li><code>bootstrap</code>: True</li>
+            <li><code>oob_score</code>: False</li>
+            <li><code>random_state</code>: 42</li>
           </ul>
 
           <h5>XGBoost (XGB)</h5>
           <ul>
-            <li>Estimators: 100</li>
-            <li>Max depth: 3</li>
-            <li>Learning rate: 0.1</li>
-            <li>Objective: <code>multi:softprob</code></li>
-            <li>Evaluation metric: <code>logloss</code></li>
-            <li>Random state: 42</li>
+            <li><code>n_estimators</code>: 300</li>
+            <li><code>max_depth</code>: 6</li>
+            <li><code>learning_rate</code>: 0.05</li>
+            <li><code>subsample</code>: 0.8</li>
+            <li><code>colsample_bytree</code>: 0.8</li>
+            <li><code>objective</code>: 'multi:softprob'</li>
+            <li><code>random_state</code>: 42</li>
           </ul>
           <!-- ===================================================== -->
           <!--  RESULTS AND DISCUSSION                               -->
@@ -343,9 +360,9 @@ type labels.
             Our initial dataset was constructed by integrating two sources: clinical gene mutation data from <strong>MSK-MET 2021 Cancer Dataset</strong> and pathway annotations from <strong>MSigDB Cancer Cell Atlas Gene Sets</strong> and <strong>KEGG PATHWAY Database</strong>. Each sample's mutated genes were mapped to 35,626 curated gene sets to produce binary pathway activation vectors. However, this mapping process revealed critical issues.
           </p>
           <ul>
-            <li><strong>Label sparsity:</strong> Out of 2 151 patient samples, 1 420 (66 %) had missing, false, or “unspecified” metastatic site labels. This significantly limited usable training data for supervised tasks.</li>
-            <li><strong>Feature sparsity:</strong> Although each sample could have up to 35 626 pathway features, most (8 757) had fewer than 10 non-zero values. Because this is mostly non-informative data, the model could not be trained effectively. This resulted in overfitting and high noise.</li>
-            <li><strong>Class imbalance:</strong> Label distribution was highly skewed: lymph (319), bone (208), liver (91), while many sites had only 1–3 samples.</li>
+            <li><strong>Label sparsity:</strong> Out of 2,151 patient samples, 1,420 (66%) had missing, false, or “unspecified” metastatic site labels. This significantly limited usable training data for supervised tasks.</li>
+            <li><strong>Feature sparsity:</strong> Although each sample could have up to 35,626 pathway features based on our methods, most (n=8,757) had fewer than 10 non-zero values. Because this is mostly non-informative data, the model could not be trained effectively. This resulted in overfitting and high noise.</li>
+            <li><strong>Class imbalance:</strong> The label distribution was highly skewed. Out of the many metastatic sites, only a few sites dominated: lymph (n=319), bone (n=208), and liver (n=91) while others had only 1–3 samples, which made it hard to balance.</li>
           </ul>
 
           <!--  UNSUPERVISED LEARNING PERFORMANCE FIGURES -->
@@ -371,6 +388,7 @@ type labels.
           <!--  SUPERVISED LEARNING PERFORMANCE FIGURES -->
           <h4>Supervised Learning Performance</h4>
           <p>
+            We trained both Random Forest and XGBoost classifiers under a One-vs-One (OvO) strategy on the PCA-reduced features. Although OvO was chosen to mitigate class imbalance and isolate signal between class pairs, predictive performance remained poor. Most classifiers failed to outperform random guessing, likely due to the high sparsity and noise of the input data, along with weak signal across most metastatic site labels.</br>
             Below are UMAP projections of OvO comparisons: Non-Metastatic vs Canonical, Digestive, Endocrine, Lymphatic/Immune, Nervous, Reproductive, Respiratory, Skeletal, and Urinary.
           </p>
           <div class="columns is-multiline is-mobile">
@@ -449,6 +467,48 @@ and predictive modeling.
           <p>
             This pivot validated the importance of dataset selection and representation, particularly in domains where feature sparsity and label imbalance fundamentally limit model performance. While the original mutation-derived dataset offered a pathway-informed view of metastatic tropism, its extreme sparsity and label imbalance ultimately made effective modeling infeasible. In contrast, the scRNA-seq dataset enabled us to extract biologically meaningful structure and significantly improve both clustering and classification outcomes. Moving forward, we plan to refine the embeddings further, explore transfer learning from cell type to metastasis prediction, and expand our benchmarking against existing models.
           </p>
+          <table border="1" cellspacing="0" cellpadding="6">
+            <caption><strong>Comparison of Clustering Performance Across Datasets</strong></caption>
+            <thead>
+              <tr>
+                <th rowspan="2">Algorithm</th>
+                <th colspan="2">MSK-MET</th>
+                <th colspan="2">scRNA-seq</th>
+              </tr>
+              <tr>
+                <th>ARI</th>
+                <th>Silhouette</th>
+                <th>ARI</th>
+                <th>Silhouette</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>KMeans</td>
+                <td>0.004</td>
+                <td>0.89</td>
+                <td>0.39</td>
+                <td>0.55</td>
+              </tr>
+              <tr>
+                <td>GMM</td>
+                <td>0.000 / 1.000<sup>*</sup></td>
+                <td>--</td>
+                <td>0.38</td>
+                <td>0.55</td>
+              </tr>
+              <tr>
+                <td>DBSCAN</td>
+                <td>0.064</td>
+                <td>-0.132</td>
+                <td>0.22</td>
+                <td>0.02</td>
+              </tr>
+            </tbody>
+          </table>
+          
+          <p><small><sup>*</sup>GMM ARI for MSK-MET was 1.0 when all samples collapsed into a single cluster (pathological case), and 0.0 in a two-class setting. Silhouette Score was not computed due to lack of cluster diversity.</small></p>
+
 
           <!-- ===================================================== -->
           <!--  REFERENCES                                           -->
