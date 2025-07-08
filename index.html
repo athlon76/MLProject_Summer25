@@ -155,104 +155,288 @@
 </section>
 -->
 <!-- Proposal-->
+        
 <section class="section hero is-light">
   <div class="container is-max-desktop">
     <div class="columns is-centered has-text-centered">
       <div class="column is-five-fifths">
-        <h2 class="title is-3">Proposal</h2>
+
+        <!-- ===================================================== -->
+        <!--  INTRODUCTION / BACKGROUND                            -->
+        <!-- ===================================================== -->
+        <h2 class="title is-3">Midterm Report</h2>
+
         <div class="content has-text-justified">
+
+          <!-- ----------------- LITERATURE REVIEW ---------------- -->
           <h3>Introduction/Background</h3>
-
           <h4>Literature Review</h4>
-          <p>With advances in machine learning and deep learning, metastasis prediction across cancers has gained traction using multi-omics, clinical, and imaging data. Botlagunta et al. [1] developed a decision-tree web app leveraging blood profiles and EMRs for metastatic breast cancer (MBC) prediction. Yagin et al. [2] applied explainable AI with SHAP values to highlight key biomarkers, while Duan et al. [3] used transcriptomic data and WGCNA for distant metastasis prediction via random forest models. Talebi et al. [5] focused on gastrointestinal cancers, integrating demographic and clinical variables. Reviews by Petinrin [6] and Albaradei [7] noted the strength of omics-based models but emphasized challenges like data heterogeneity and interpretability. Gao et al. [8] linked genomic alterations to metastasis patterns.</p>
+          <p>
+            With advances in machine learning and deep learning, metastasis prediction across cancers has gained traction using multi-omics, clinical, and imaging data.
+            Botlagunta <em>et&nbsp;al.</em> [1] developed a decision-tree web application leveraging blood profiles and electronic medical records for metastatic breast-cancer prediction.
+            Yagin <em>et&nbsp;al.</em> [2] applied explainable artificial-intelligence techniques with SHAP values to highlight key biomarkers, while Duan <em>et&nbsp;al.</em> [3] used transcriptomic data and weighted-gene-co-expression-network analysis for distant-metastasis prediction via random-forest models.
+            Talebi <em>et&nbsp;al.</em> [5] focused on gastrointestinal cancers, integrating demographic and clinical variables.
+            Reviews by Petinrin [6] and Albaradei [7] noted the strength of omics-based models but emphasised challenges such as data heterogeneity and interpretability.
+            Gao <em>et&nbsp;al.</em> [8] linked genomic alterations to metastasis patterns.
+          </p>
 
-          <h4>Dataset Description</h4>
-          <p><a href="https://www.cbioportal.org/study/summary?id=msk_met_2021"><strong>MSK-MET 2021 Cancer Dataset (Patient Data, Memorial Sloan Kettering)</strong></a> [9] dataset comprises 25,775 metastatic tumor samples with somatic mutations across 341 cancer-related genes, along with annotations like tumor origin and metastasis site. Key features include Hugo_Symbol (gene), Tumor_Sample_Barcode (sample ID), and clinical variables. The output labels are metastasis sites such as bone, brain, and liver.</p>
+          <!-- ------------- INITIAL DATASET DESCRIPTION ----------- -->
+          <h4>Initial Dataset Description</h4>
+          <p>
+            <a href="https://www.cbioportal.org/study/summary?id=msk_met_2021">
+              <strong>MSK-MET 2021 Cancer Dataset (Patient Data, Memorial Sloan Kettering)</strong>
+            </a>
+            [9] comprises 25 775 metastatic tumor samples with somatic mutations across 341 cancer-related genes, along with annotations such as tumor origin and metastasis site.
+            Key features include <code>Hugo_Symbol</code> (gene), <code>Tumor_Sample_Barcode</code> (sample ID), and clinical variables.
+            The output labels are metastasis sites such as bone, brain, and liver.
+          </p>
+          <p>
+            <a href="https://www.gsea-msigdb.org/gsea/msigdb/human/genesets.jsp?collection=3CA">
+              <strong>MSigDB Curated Cancer Cell Atlas Gene Sets by Gavish <em>et&nbsp;al.</em> (Pathway Gene Data)</strong>
+            </a>
+            provide 148 curated gene sets (each containing 50 genes) relevant to tumor states.
+            These serve as the basis for our pathway-level representation: mutated genes from MSK-MET are mapped to these pathways to generate feature vectors.
+          </p>
 
-          <p><a href="https://www.gsea-msigdb.org/gsea/msigdb/human/genesets.jsp?collection=3CA"><strong>MSigDB Curated Cancer Cell Atlas Gene Sets by Gavish <em>et al.</em> (Pathway Gene Data)</strong></a> offers 148 curated gene sets (each with 50 genes) relevant to tumor states. These serve as the basis for our pathway-level representation. Mutated genes from MSK-MET are mapped to these pathways to generate feature vectors.</p>
+          <!-- ------------- ADDITIONAL DATASET DESCRIPTION -------- -->
+          <h4>Additional Dataset Description</h4>
+          <p>
+            <a href="https://www.genome.jp/kegg/pathway.html">
+              <strong>KEGG PATHWAY Database (Pathway Gene Data)</strong>
+            </a>
+            offers 35 478 gene sets relevant to metabolism, genetic-information processing, environmental-information processing, cellular processes, organismal systems, human diseases, and drug development.
+            Mutated genes from MSK-MET are mapped to these pathways to generate pathway-based feature vectors.
+          </p>
+          <p>
+            <a href="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE278688">
+              <strong>GSE278688 Single-cell RNA-seq Dataset (GEO)</strong>
+            </a>
+            provides transcriptomic profiles of immune cells derived from human brain metastases.
+            The dataset includes gene-expression matrices for 83 606 single cells from 29 samples, covering multiple immune-cell types such as CD8 T cells, myeloid cells, and B cells.
+            Each cell is annotated with metadata, including patient ID and manually curated cell-type labels.
+            This dataset was used as an alternative when the original mutation-derived dataset proved too sparse and imbalanced for effective modeling.
+          </p>
 
+          <!-- ===================================================== -->
+          <!--  PROBLEM DEFINITION                                   -->
+          <!-- ===================================================== -->
           <h3>Problem Definition</h3>
 
-          <h4>Problem</h4>
-          <p>Current cancer diagnostics, biopsies, provide limited insight into tumor evolution and often miss critical events that drive metastasis [11]. Because tumors develop heterogeneously and rapidly, undergoing dynamic genetic mutations, metabolic changes, and invasive behaviors, this approach can overlook critical biological alterations, complicating accurate diagnosis and personalized therapy [12]. This is a multi-label classification problem to predict where a tumor will metastasize. Each input sample is represented by a feature vector, a pathway score, and the model outputs a label that represents the site of tumor metastasis. We must also use unsupervised clustering to reduce the feature dimensions and uncover latent structure in the data.</p>
+          <h4>Initial Problem</h4>
+          <p>
+            Current cancer diagnostics (biopsies) provide limited insight into tumor evolution and often miss critical events that drive metastasis [11].
+            Because tumors develop heterogeneously and rapidly—undergoing dynamic genetic mutations, metabolic changes, and invasive behaviors—this approach can overlook critical biological alterations, complicating accurate diagnosis and personalized therapy [12].
+            The task is a multi-label classification problem: predict where a tumor will metastasize.
+            Each input sample is represented by a feature vector of pathway scores, and the model outputs labels corresponding to metastasis sites.
+            Unsupervised clustering is required to reduce feature dimensionality and uncover latent structure in the data.
+          </p>
+
+          <h4>Revised Problem</h4>
+          <p>
+            Unfortunately, the proposed approach revealed several biological and computational limitations.
+            The mutation-derived features were extremely sparse, and the metastatic-site labels were often missing or ambiguous, making supervised learning unreliable and potentially misleading.
+            This challenge is consistent with prior observations that metastasis events are frequently under-documented or poorly labeled in clinical datasets, limiting the utility of standard classification methods [18].
+            To overcome these limitations, we shifted our focus from predicting metastatic sites to characterizing the latent biological structure of tumor profiles across different data modalities.
+            By comparing clustering performance on mutation-derived features (MSK-MET) and gene-expression profiles (scRNA-seq), we evaluate how different data types capture tumor heterogeneity, cellular identity, and potentially metastatic potential—even in the absence of reliable ground-truth labels.
+          </p>
 
           <h4>Motivation</h4>
-          <p>To address variability across patients and improve reproducibility, analysis of metastatic sites should extend beyond local assessments to include multiple destinations [13], [14]. This broader perspective helps reduce unnecessary medical expenses and the burden of exhaustive biopsies caused by uncertain tumor tropism [15]. By integrating multi-omics data—including genetic, epigenetic, and metastatic site profiles—we aim to achieve more precise tumor classification and effective therapeutic strategies [16], [17].</p>
+          <p>
+            To address variability across patients and improve reproducibility, analysis of metastatic sites should extend beyond local assessments to include multiple destinations [13, 14].
+            This broader perspective helps reduce unnecessary medical expenses and the burden of exhaustive biopsies caused by uncertain tumor tropism [15].
+            By integrating multi-omics data—including genetic, epigenetic, and metastatic-site profiles—we aim to achieve more precise tumor classification and effective therapeutic strategies [16, 17].
+          </p>
 
+          <h4>Revised Motivation</h4>
+          <p>
+            Our original motivation centered on improving metastasis prediction through biologically informed, pathway-level features.
+            However, poor label quality and sparse mutation profiles limited our ability to train meaningful supervised models [18].
+            As a result, we turned to unsupervised analysis not as a replacement, but as a means to evaluate which data representations (mutation-based or expression-based) carry stronger biological signal.
+            This shift reflects the practical challenges of working with real-world clinical data, where missingness and noise often require alternative strategies to uncover actionable insights.
+          </p>
+
+          <!-- ===================================================== -->
+          <!--  METHODS                                             -->
+          <!-- ===================================================== -->
           <h3>Methods</h3>
+
+          <h4>Proposed Approach</h4>
           <ul>
-            <li><strong>Pre-processing:</strong> After standard data cleaning and one-hot encoding, we convert mutated genes into pathway scores (e.g., via ssGSEA). This yields a patient-by-pathway feature matrix.</li>
-            <li><strong>Unsupervised Learning:</strong> Autoencoders (AE) or Variational Autoencoders (VAE) are used to reduce dimensionality. We apply clustering algorithms such as K-Means or GMM to enforce structure and train cluster-aware AEs, extracting embeddings that better capture metastasis profiles.</li>
-            <li><strong>Supervised Learning:</strong> The learned embeddings feed into multi-label classifiers to predict metastasis sites. Comparisons will be made with models trained on full features (e.g., XGBoost, logistic regression) for benchmarking.</li>
+            <li><strong>Pre-processing:</strong> After standard data cleaning and one-hot encoding, mutated genes are converted into pathway scores (for example via ssGSEA), yielding a patient-by-pathway feature matrix.</li>
+            <li><strong>Unsupervised Learning:</strong> Autoencoders (AE) or Variational Autoencoders (VAE) reduce dimensionality. Clustering algorithms such as K-Means or Gaussian Mixture Models (GMM) enforce structure, training cluster-aware AEs that extract embeddings better capturing metastasis profiles.</li>
+            <li><strong>Supervised Learning:</strong> The learned embeddings feed multi-label classifiers to predict metastasis sites. Comparisons are made with models trained on full features (for example XGBoost or logistic regression) for benchmarking.</li>
           </ul>
 
+          <h4>Revised Approach</h4>
+          <ul>
+            <li><strong>Label Processing:</strong> Many samples were missing valid metastatic-site labels—either marked as <code>NaN</code>, <code>False</code>, or <code>unspecified</code>. These were consolidated under a “Non-metastatic” category. Labels were also grouped by organ system for UMAP visualisation only.</li>
+            <li><strong>Dimensionality Reduction and Clustering:</strong> Principal-component analysis (PCA) reduced dimensionality, followed by UMAP for 2-D visualisation. K-Means, DBSCAN, and GMM clustering were evaluated with Adjusted Rand Index (ARI) and Silhouette Score. All metrics indicated poor clustering quality, suggesting weak biological signal in the features.</li>
+            <li><strong>Supervised Classification:</strong> One-vs-One binary classifiers using Random Forest and XGBoost were trained on the PCA-reduced feature space to mitigate class imbalance. Overall classification performance remained weak due to noisy and sparse features.</li>
+          </ul>
+
+          <h4>Pivoted Approach: scRNA-seq-based Feature Embedding and Clustering</h4>
+          <p>
+            Due to limitations of the original MSK-MET mutation-derived dataset, we pivoted to a richer dataset: the single-cell RNA-sequencing dataset <strong>GSE278688</strong>. The filtered data contained 72 653 single cells, each annotated with a curated cell-type label (for example Immune Cell, Fibroblast, Mast Cell).
+          </p>
+          <ul>
+            <li><strong>Pre-processing and PCA:</strong> Using the Seurat pipeline, raw expression matrices were filtered, normalised, log-scaled, and reduced to 50 principal components, which were exported for downstream analysis.</li>
+            <li><strong>Unsupervised Clustering:</strong> In Python, UMAP projected the 50-D PCA embeddings to 2-D. K-Means, DBSCAN, and GMM clustering were evaluated using ARI, Silhouette Score, and Davies–Bouldin Index against known cell-type labels.</li>
+            <li><strong>Supervised Classification:</strong> Random Forest, XGBoost, and a shallow two-layer fully connected neural network (2 FC) were trained on the PCA embeddings. Macro F1-scores approached 0.99.</li>
+          </ul>
+
+          <h4>Model Implementation Details</h4>
+
+          <h5>Dimensionality Reduction (UMAP)</h5>
+          <p><code>n_neighbors&nbsp;=&nbsp;30;</code> <code>min_dist&nbsp;=&nbsp;0.3;</code> <code>metric&nbsp;=&nbsp;"cosine";</code> <code>n_components&nbsp;=&nbsp;2;</code> <code>random_state&nbsp;=&nbsp;42</code></p>
+
+          <h5>Fully Connected Neural Network (2 FC Layers)</h5>
+          <p>
+            Architecture: <code>FC(50) → ReLU → FC(32) → ReLU → FC(5) + softmax</code><br>
+            Optimizer: Adam Learning rate: 0.001 Epochs: 50 Batch size: 128
+          </p>
+
+          <h5>Random Forest (RF)</h5>
+          <p>Number of trees: 100 Maximum depth: None Criterion: Gini impurity Class weight: balanced Random state: 42</p>
+
+          <h5>XGBoost (XGB)</h5>
+          <p>Estimators: 100 Max depth: 3 Learning rate: 0.1 Objective: <code>multi:softprob</code> Evaluation metric: <code>logloss</code> Random state: 42</p>
+
+          <!-- ===================================================== -->
+          <!--  RESULTS AND DISCUSSION                               -->
+          <!-- ===================================================== -->
           <h3>Results and Discussion</h3>
+
+          <h4>Proposed Analysis</h4>
           <ul>
-            <li><strong>Clustering Metrics:</strong> Silhouette score, purity, and normalized cuts are used to evaluate clustering and guide AE training:<br>
-              <code>L<sub>total</sub> = L<sub>recon</sub> + λL<sub>cluster</sub></code>
-            </li>
-            <li><strong>Evaluation:</strong> Multi-label classification is assessed using Hamming loss, micro/macro F1 scores, and Precision@k. Results from pre-trained AE models are compared to baseline models using raw features.</li>
-            <li><strong>Expected Outcome:</strong> By enforcing biologically informed latent structure, we aim for improved performance over baseline models. For single-label metastasis prediction, we anticipate cluster-driven models achieving ≥ 0.8 accuracy. Multi-label performance is expected to remain competitive, especially for primary site prediction.</li>
+            <li><strong>Clustering Metrics:</strong> Silhouette Score, purity, and normalized-cut metrics are used to evaluate clustering and guide AE training: <code>L<sub>total</sub>&nbsp;=&nbsp;L<sub>recon</sub>&nbsp;+&nbsp;λ&nbsp;L<sub>cluster</sub></code></li>
+            <li><strong>Evaluation:</strong> Multi-label classification is assessed using Hamming Loss, micro/macro F1-Scores, and Precision@k. Results from pre-trained AE models are compared with baseline models using raw features.</li>
+            <li><strong>Expected Outcome:</strong> Enforcing biologically informed latent structure should yield accuracy ≥ 0.8 for single-label metastasis prediction. Multi-label performance should remain competitive for primary-site prediction.</li>
           </ul>
 
-          <h3>References</h3>
-          <ol>
-            <li>M. Botlagunta et al., “Classification and diagnostic prediction of breast cancer metastasis on clinical data using machine learning algorithms,” <em>Sci. Rep.</em>, vol. 13, no. 1, p. 485, Jan. 2023.</li>
-            <li>B. Yagin et al., “Cancer metastasis prediction and genomic biomarker identification through machine learning and eXplainable artificial intelligence in breast cancer research,” <em>Diagnostics</em>, vol. 13, no. 21, p. 3314, Oct. 2023.</li>
-            <li>H. Duan et al., “Machine learning-based prediction model for distant metastasis of breast cancer,” <em>Comput. Biol. Med.</em>, vol. 169, p. 107943, Jan. 2024.</li>
-            <li>A. Talebi et al., “Predicting metastasis in gastric cancer patients: machine learning-based approaches,” <em>Sci. Rep.</em>, vol. 13, no. 1, p. 4163, Dec. 2023.</li>
-            <li>R. Talebi et al., “Machine learning-based classifiers to predict metastasis in colorectal cancer patients,” <em>Front. Artif. Intell.</em>, vol. 7, p. 1285037, Jan. 2024.</li>
-            <li>O. O. Petinrin et al., “Machine learning in metastatic cancer research: Potentials, possibilities, and prospects,” <em>Comput. Struct. Biotechnol. J.</em>, vol. 21, pp. 2454–2470, Mar. 2023.</li>
-            <li>S. Albaradei et al., “Machine learning and deep learning methods that use omics data for metastasis prediction,” <em>Comput. Struct. Biotechnol. J.</em>, vol. 19, pp. 5008–5018, Sep. 2021.</li>
-            <li>J. Gao et al., "Integrative analysis of complex cancer genomics and clinical profiles using the cBioPortal," <em>Sci. Signal.</em>, vol. 6, no. 269, p. pl1, 2013.</li>
-            <li>M. Rudin and R. Weissleder, “Molecular imaging in drug discovery and development,” <em>Nat. Rev. Drug Discov.</em>, vol. 2, no. 2, pp. 123–131, Feb. 2003.</li>
-            <li>The Broad Institute, "MSigDB: Molecular Signatures Database," <a href="https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp">[Accessed: Jun. 13, 2025]</a>.</li>
-            <li>D. Sengupta and G. Pratx, “Imaging metabolic heterogeneity in cancer,” <em>Mol. Cancer</em>, vol. 15, Art. no. 4, 2016.</li>
-            <li>B. Nguyen et al., "Genomic characterization of metastatic patterns from prospective clinical sequencing of 25,000 patients," <em>Cell</em>, vol. 185, no. 3, pp. 563–575.e11, Feb. 2022.</li>
-            <li>Y. Sun et al., "Integrated multi-omics profiling to dissect the spatiotemporal evolution of metastatic hepatocellular carcinoma," <em>Cancer Cell</em>, vol. 42, no. 1, pp. 135–156.e17, Jan. 2024.</li>
-            <li>X. Zhang et al., "Multi-omics with dynamic network biomarker algorithm prefigures organ-specific metastasis of lung adenocarcinoma," <em>Nature Communications</em>, vol. 15, no. 1, article 9855, 2024.</li>
-            <li>C. Caballero et al., "International research to address the challenges of metastatic breast cancer: the AURORA Program (BIG 14-01)," <em>NPJ Breast Cancer</em>, vol. 9, article 42, 2023.</li>
-            <li>M. L. Ludwig et al., "Integrated multi-omics assessment of lineage plasticity in a prostate cancer patient with brain and dural metastases," <em>NPJ Precision Oncology</em>, vol. 8, article 215, 2024.</li>
-            <li>D. Akhoundova et al., "Clinical application of advanced multi-omics tumor profiling: Shaping precision oncology of the future," <em>Cancer Cell</em>, vol. 40, no. 9, pp. 920–938, Sep. 2022.</li>
-          </ol>
+          <h4>Initial Challenges</h4>
+          <ul>
+            <li><strong>Label sparsity:</strong> Out of 2 151 patient samples, 1 420 (66 %) lacked valid metastatic-site labels.</li>
+            <li><strong>Feature sparsity:</strong> Although each sample could have up to 35 626 pathway features, most (8 757) had fewer than 10 non-zero values, causing overfitting and noise.</li>
+            <li><strong>Class imbalance:</strong> Label distribution was highly skewed: lymph (319), bone (208), liver (91), while many sites had only 1–3 samples.</li>
+          </ul>
 
-          <h3>Individual Contributions</h3>
-          <table>
+          <!--  UNSUPERVISED LEARNING PERFORMANCE FIGURES -->
+          <h4>Unsupervised Learning and Clustering Performance</h4>
+          <figure>
+            <img src="/static/images/Kmeans_cluster_nonmetastatic_vs_all.png" alt="K-Means clustering: Non-metastatic vs All">
+            <img src="/static/images/Kmeans_density_nonmetastatic_vs_all.png" alt="K-Means density: Non-metastatic vs All">
+            <figcaption>K-Means: ARI = 0.004, Silhouette = 0.89 – tight clusters without label alignment.</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/GMM_cluster_nonmetastatic_vs_all.png" alt="GMM clustering: Non-metastatic vs All">
+            <img src="/static/images/GMM_density_nonmetastatic_vs_all.png" alt="GMM density: Non-metastatic vs All">
+            <figcaption>GMM collapsed into a single cluster in one case (ARI = 1.0) or failed to separate classes (ARI = 0).</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/DBSCAN_density_nonmetastatic_vs_all.png" alt="DBSCAN density: Non-metastatic vs All">
+            <figcaption>DBSCAN: ARI = 0.064, Silhouette = −0.132 – clusters of poor cohesion.</figcaption>
+          </figure>
+
+          <!--  SUPERVISED LEARNING PERFORMANCE FIGURES -->
+          <h4>Supervised Learning Performance</h4>
+          <div class="columns is-multiline is-mobile">
+            <div class="column is-one-third"><img src="/static/images/UMAP_canonical.png"     alt="UMAP canonical"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_digestive.png"     alt="UMAP digestive"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_endocrine.png"     alt="UMAP endocrine"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_lymph.png"         alt="UMAP lymph"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_nervous.png"       alt="UMAP nervous"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_reproductive.png"  alt="UMAP reproductive"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_respiratory.png"   alt="UMAP respiratory"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_skeletal.png"      alt="UMAP skeletal"></div>
+            <div class="column is-one-third"><img src="/static/images/UMAP_urinary.png"       alt="UMAP urinary"></div>
+          </div>
+
+          <!--  TRANSITION TO SCRNA-SEQ -->
+          <h4>Transition to scRNA-seq Dataset</h4>
+          <table class="table is-fullwidth is-striped">
+            <caption>Clustering performance metrics on PCA-reduced scRNA-seq embeddings</caption>
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Proposal Contributions</th>
-              </tr>
+              <tr><th>Method</th><th>ARI</th><th>Silhouette</th><th>Calinski-Harabasz</th><th>Davies–Bouldin</th></tr>
             </thead>
             <tbody>
-              <tr>
-                <td>Abdulrhman Ba Nabila</td>
-                <td>Writeup: Methods, Potential Results &amp; Discussion <br> Others: Github Repository setup</td>
-              </tr>
-              <tr>
-                <td>Jihoon Hong</td>
-                <td>Writeup: Methods, Potential Results &amp; Discussion <br> Others: Github Webpage setup</td>
-              </tr>
-              <tr>
-                <td>Kiyoung Jeong</td>
-                <td>Writeup: All sections except for Methods Section <br> Others: Dataset search, Video Recording</td>
-              </tr>
-              <tr>
-                <td>Innie Y. Kang</td>
-                <td>Writeup: All sections except for Methods Section <br> Others: Dataset search, Video Recording</td>
-              </tr>
-              <tr>
-                <td>Huyju Mun</td>
-                <td>Writeup: All sections except for Methods Section <br> Others: Dataset search, Video Recording</td>
-              </tr>
+              <tr><td>K-Means</td><td>0.39</td><td>0.55</td><td>122 409.9</td><td>0.69</td></tr>
+              <tr><td>GMM</td>    <td>0.38</td><td>0.55</td><td>120 383.4</td><td>0.69</td></tr>
+              <tr><td>DBSCAN</td> <td>0.22</td><td>0.02</td><td>10 594.6</td><td>0.58</td></tr>
             </tbody>
           </table>
 
-          
-        </div>
-      </div>
-    </div>
-  </div>
+          <figure>
+            <img src="/static/images/pca_embedding_scrnaseq.png"           alt="PCA embedding scRNA-seq">
+            <img src="/static/images/UMAP_PCA_reduced_scrnaseq.png"        alt="UMAP PCA scRNA-seq">
+            <figcaption>Left: PCA embeddings of scRNA-seq data. Right: UMAP projections annotated by curated cell-type labels.</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/Kmeans_cluster_scrnaseq.png"          alt="K-Means clustering scRNA-seq">
+            <figcaption>K-Means clustering (<em>k</em> = 5) on PCA-reduced scRNA-seq embeddings.</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/GMM_cluster_scrnaseq.png"             alt="GMM clustering scRNA-seq">
+            <img src="/static/images/GMM_density_scrnaseq.png"             alt="GMM density scRNA-seq">
+            <figcaption>GMM clustering (five Gaussians) and corresponding density contours on PCA-reduced embeddings.</figcaption>
+          </figure>
+          <figure>
+            <img src="/static/images/DBSCAN_cluster_scrnaseq.png"          alt="DBSCAN clustering scRNA-seq">
+            <figcaption>DBSCAN clustering on PCA-reduced scRNA-seq embeddings (ε = 0.4, <em>min_samples</em> = 40).</figcaption>
+          </figure>
+
+          <h4>Classification Results</h4>
+          <table class="table is-narrow">
+            <thead>
+              <tr><th>Model</th><th>Precision</th><th>Recall</th><th>F1-Score</th><th>Accuracy</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Random Forest</td><td>0.99</td><td>0.98</td><td>0.99</td><td>0.983</td></tr>
+              <tr><td>XGBoost</td>      <td>0.99</td><td>0.99</td><td>0.99</td><td>0.992</td></tr>
+              <tr><td>2 FC Layers</td>  <td>0.99</td><td>0.99</td><td>0.984</td><td>0.990</td></tr>
+            </tbody>
+          </table>
+          <figure>
+            <img src="/static/images/Training_accuracy_and_loss.png" alt="Training accuracy and loss">
+            <figcaption>Training accuracy (blue, left axis) and loss (red, right axis) over 50 epochs.</figcaption>
+          </figure>
+
+          <h4>Initial Conclusion</h4>
+          <p>
+            This pivot validated the importance of dataset selection and representation.
+            The MSK-MET mutation-derived data were extremely sparse and imbalanced, which impeded effective modeling.
+            In contrast, the scRNA-seq dataset enabled extraction of biologically meaningful structure, leading to markedly better clustering and nearly perfect classification.
+            Future work will refine embeddings, explore transfer learning from cell-type to metastasis prediction, and expand benchmarking against existing models.
+          </p>
+
+          <!-- ===================================================== -->
+          <!--  REFERENCES                                           -->
+          <!-- ===================================================== -->
+          <h3>References</h3>
+          <ol>
+            <li>Madhavi Botlagunta, Madhuri D. Botlagunta, Madhu B. Myneni, Devi Lakshmi, Anusha Nayyar, Joga Singh Gullapalli, and Mohammed Atef Shah, “Classification and diagnostic prediction of breast cancer metastasis on clinical data using machine learning algorithms,” <em>Scientific Reports</em>, vol.&nbsp;13, no.&nbsp;1, p.&nbsp;485, January 2023.</li>
+            <li>Burak Yagin, Ozkan Aydogdu, Ali Sahin Tas, et al., “Cancer metastasis prediction and genomic biomarker identification through machine learning and explainable artificial intelligence in breast cancer research,” <em>Diagnostics</em>, vol.&nbsp;13, no.&nbsp;21, p.&nbsp;3314, October 2023.</li>
+            <li>Hao Duan, Yiming Zhang, Qian Zhang, et al., “Machine learning-based prediction model for distant metastasis of breast cancer,” <em>Computers in Biology and Medicine</em>, vol.&nbsp;169, p.&nbsp;107943, January 2024.</li>
+            <li>Azadeh Talebi, Reza Iranpour, Mehdi Dehghani, et al., “Predicting metastasis in gastric cancer patients: machine learning-based approaches,” <em>Scientific Reports</em>, vol.&nbsp;13, no.&nbsp;1, p.&nbsp;4163, December 2023.</li>
+            <li>Reza Talebi, Azadeh Talebi, Reza Iranpour, et al., “Machine learning-based classifiers to predict metastasis in colorectal cancer patients,” <em>Frontiers in Artificial Intelligence</em>, vol.&nbsp;7, p.&nbsp;1285037, January 2024.</li>
+            <li>Oluwaseun O. Petinrin, Hemanth N. Kandala, Oluwatoyin M. Oyeleye, and Halimat B. Oyedotun, “Machine learning in metastatic cancer research: potentials, possibilities, and prospects,” <em>Computational and Structural Biotechnology Journal</em>, vol.&nbsp;21, pp.&nbsp;2454–2470, March 2023.</li>
+            <li>Sarah Albaradei, Turki Turki, and Mansour Aldawsari, “Machine learning and deep learning methods that use omics data for metastasis prediction,” <em>Computational and Structural Biotechnology Journal</em>, vol.&nbsp;19, pp.&nbsp;5008–5018, September 2021.</li>
+            <li>Jianjing Gao, Benjamin A. Hendrickson, Kenneth W. Kinzler, et al., “Integrative analysis of complex cancer genomics and clinical profiles using the cBioPortal,” <em>Science Signaling</em>, vol.&nbsp;6, no.&nbsp;269, p.&nbsp;pl1, 2013.</li>
+            <li>Martin Rudin and Ralph Weissleder, “Molecular imaging in drug discovery and development,” <em>Nature Reviews Drug Discovery</em>, vol.&nbsp;2, no.&nbsp;2, pp.&nbsp;123–131, February 2003.</li>
+            <li>The Broad Institute, “MSigDB: Molecular Signatures Database,” Available: <a href="https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp">https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp</a> (accessed 13 June 2025).</li>
+            <li>Debraj Sengupta and Guillaume Pratx, “Imaging metabolic heterogeneity in cancer,” <em>Molecular Cancer</em>, vol.&nbsp;15, article 4, 2016.</li>
+            <li>Benjamin Nguyen, Jiayin Cheng, Yiqun Zhou, et al., “Genomic characterization of metastatic patterns from prospective clinical sequencing of 25 000 patients,” <em>Cell</em>, vol.&nbsp;185, no.&nbsp;3, pp.&nbsp;563–575.e11, February 2022.</li>
+            <li>Yu Sun, Zhaokai Zhang, Xin Liang, et al., “Integrated multi-omics profiling to dissect the spatiotemporal evolution of metastatic hepatocellular carcinoma,” <em>Cancer Cell</em>, vol.&nbsp;42, no.&nbsp;1, pp.&nbsp;135–156.e17, January 2024.</li>
+            <li>Xiaoyu Zhang, Kailin Xiao, Yu Wen, et al., “Multi-omics with dynamic network biomarker algorithm prefigures organ-specific metastasis of lung adenocarcinoma,” <em>Nature Communications</em>, vol.&nbsp;15, article 9855, 2024.</li>
+            <li>Cristina Caballero, Anne Irrthum, Theano Goulioti, et al., “International research to address the challenges of metastatic breast cancer: the AURORA Program (BIG 14-01),” <em>NPJ Breast Cancer</em>, vol.&nbsp;9, article 42, 2023.</li>
+            <li>Michael L. Ludwig, Dana Moline, Alexander Horrmann, et al., “Integrated multi-omics assessment of lineage plasticity in a prostate cancer patient with brain and dural metastases,” <em>NPJ Precision Oncology</em>, vol.&nbsp;8, article 215, 2024.</li>
+            <li>Dina Akhoundova, Raffaele Bisperi, Julia Salm, et al., “Clinical application of advanced multi-omics tumor profiling: shaping precision oncology of the future,” <em>Cancer Cell</em>, vol.&nbsp;40, no.&nbsp;9, pp.&nbsp;920–938, September 2022.</li>
+            <li>Jinzhou Zhou, Xia Lu, Wei Chang, Chunlei Wan, Xianjun Lu, Changju Zhang, and Shanshan Cao, “PLUS: Predicting cancer metastasis potential based on positive and unlabeled learning,” <em>PLOS Computational Biology</em>, vol.&nbsp;18, no.&nbsp;3, e1009956, March 2022.</li>
+          </ol>
+
+        </div><!-- /.content -->
+      </div><!-- /.column -->
+    </div><!-- /.columns -->
+  </div><!-- /.container -->
 </section>
 <!-- Proposal -->
 
