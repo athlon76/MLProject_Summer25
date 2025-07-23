@@ -540,6 +540,14 @@ and predictive modeling.
             <li><strong>XGB F-score</strong>: PC_2 was used in over 365 splits, with PC_4 (~100) and PC_1 (~55) following. The frequency of other features dropped dramatically.</li>
           </ul>
 
+          <figure>
+            <img src="static/images/image.png" alt="XGBoost Feature Importance based on F-score">
+            <img src="static/images/image (1).png" alt="Random Forest Feature Importance based on Gain">
+            <figcaption>
+              Up: XGBoost Feature Importance based on F-score. Down: Random Forest Feature Importance based on Gain. In both models, PC_2 was the most dominant feature.
+            </figcaption>
+          </figure>
+
           <p>
             The agreement between RF and XGB in identifying PC_2, PC_1, and PC_4 as top features suggests a stable underlying structure in the data, with a few principal components capturing most of the predictive signal. These PCs likely encode key transcriptional programs distinguishing cell types. Further interpretation using SHAP analysis will help disentangle the directionality and contextual effects of these features.
           </p>
@@ -561,6 +569,31 @@ and predictive modeling.
             <li><strong>Other Cells:</strong> Feature contributions were more evenly distributed. PC_4 and PC_1 had the strongest influence, followed by PC_3, PC_8, and PC_2. Lesser PCs showed minimal but nonzero effect.</li>
           </ul>
 
+          <figure>
+            <img src="static/images/image (2).png" alt="SHAP summary plot for Endothelial cells">
+            <img src="static/images/image (3).png" alt="SHAP summary plot for Fibroblast cells">
+            <figcaption>
+              Up: SHAP summary plot for Endothelial cells. Down: SHAP summary plot for Fibroblast cells. PC_8 and PC_7 dominate endothelial prediction, while PC_2 and PC_1 dominate fibroblast classification.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <img src="static/images/image (4).png" alt="SHAP summary plot for Immune cells">
+            <img src="static/images/image (5).png" alt="SHAP summary plot for Mast cells">
+            <figcaption>
+              Up: SHAP summary plot for Immune cells. Down: SHAP summary plot for Mast cells. PC_2 and PC_1 remain dominant, with more nuanced contributions from PC_14, PC_19, and PC_6.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <img src="static/images/image (6).png" alt="SHAP summary plot for Other cells">
+            <figcaption>
+              SHAP summary plot for Other cells. No single principal component dominates the prediction, but multiple features like PC_4, PC_1, and PC_3 contribute comparably, with a long tail of moderately important features.
+            </figcaption>
+          </figure>
+
+
+
           <p>
           These results highlight that while some principal components (e.g., PC_2, PC_1, PC_4) consistently influence classification across all cell types, others (e.g., PC_8, PC_19, PC_14) may exert more context-specific effects. The directional contributions revealed by SHAP enable a deeper understanding of how latent transcriptional signals differentiate cell identities within the model.
           </p>
@@ -570,6 +603,15 @@ and predictive modeling.
           <p>
           To synthesize feature importance across all predicted cell types, we computed mean absolute SHAP values (mean |SHAP|) for each principal component and visualized their cumulative contributions across all five cell type classes. These stacked bar plots allow us to assess the global influence of each feature as well as how consistently it contributes across cell types.
           </p>
+
+          <figure>
+            <img src="static/images/image (7).png" alt="Mean absolute SHAP values for Random Forest">
+            <img src="static/images/image (8).png" alt="Mean absolute SHAP values for XGBoost">
+            <figcaption>
+              Up: Mean absolute SHAP value plot for Random Forest. Down: Mean absolute SHAP value plot for XGBoost, aggregated across all cell types. Each bar represents the total SHAP magnitude for a given PC, colored by contribution from each individual cell type.
+            </figcaption>
+          </figure>
+
           
           <p><strong>Key observations:</strong></p>
           <ul>
@@ -589,6 +631,31 @@ and predictive modeling.
           <p>
           To compare cell-type-specific prediction mechanisms across models, we examined SHAP beeswarm plots for the XGBoost classifier trained on the PCA-reduced scRNA-seq dataset. These plots display how individual feature values (principal components) influence the model's predicted probability for each cell type. The color encodes the relative magnitude of each PC (blue = low, red = high), and the horizontal spread indicates the impact of those values on prediction outcomes.
           </p>
+
+          <figure>
+            <img src="static/images/image (9).png" alt="SHAP beeswarm plot for Endothelial cells using XGBoost">
+            <img src="static/images/image (10).png" alt="SHAP beeswarm plot for Fibroblast cells using XGBoost">
+            <figcaption>
+              Up: SHAP beeswarm plot for Endothelial cells using XGBoost. Down: SHAP beeswarm plot for Fibroblast cells using XGBoost. PC_8 and PC_7 dominate endothelial prediction, while PC_2 and PC_1 dominate fibroblast classification.
+            </figcaption>
+          </figure>
+
+          <figure>
+            <img src="static/images/image (11).png" alt="SHAP beeswarm plot for Immune cells using XGBoost">
+            <img src="static/images/image (12).png" alt="SHAP beeswarm plot for Mast cells using XGBoost">
+            <figcaption>
+              Up: SHAP beeswarm plot for Immune cells using XGBoost. Down: SHAP beeswarm plot for Mast cells using XGBoost. PC_2 and PC_1 dominate both, with PC_14 and PC_19 showing additional influence in mast cell classification.
+            </figcaption>
+          </figure>
+
+
+          <figure>
+            <img src="static/images/image (13).png" alt="SHAP beeswarm plot for Other cells using XGBoost">
+            <figcaption>
+              SHAP beeswarm plot for Other cells using XGBoost. Contributions are more evenly distributed, with PC_4, PC_1, PC_3, and PC_8 among the most influential.
+            </figcaption>
+          </figure>
+
           
           <p><strong>Key observations:</strong></p>
           <ul>
