@@ -511,38 +511,225 @@ and predictive modeling.
 
           <h4>Next Steps</h4>
           <p>
-            Given the high classification performance across models (Random Forest, XGBoost, and two fully connected layers), we aim to further validate and interpret the results through the following steps. First, we will refine the training pipeline by implementing a three-way data split with proportions of 64% for training, 16% for validation, and 20% for testing. Additionally, we will incorporate 5-fold cross-validation to assess the robustness and generalizability of each model and reduce the risk of overfitting. </br>
-            To enhance biological interpretability—particularly in the context of brain cancer metasta-
-sis—we will move beyond reliance on canonical markers to identify cell clusters. Specifically, we plan to investigate feature importance using tree-based models (Random Forest and XGBoost) in conjunction with SHAP (SHapley Additive exPlanations) analysis. This approach will enable us not only to rank predictive features but also to understand the directionality and contribution of each feature in determining cell identity. </br>
-            Furthermore, we plan to incorporate <strong>Variational Autoencoders (VAEs)</strong> to capture latent representations of the gene expression profiles. By learning a compressed, probabilistic embedding of the transcriptomic landscape, VAEs can uncover underlying biological structure and heterogeneity among cells. We will compare the latent space learned by VAEs with that derived from PCA or UMAP to assess its utility for clustering and classification, as well as its potential to improve model interpretability and performance in downstream tasks.
+            Given the high classification performance across models (Random Forest, XGBoost, and two fully connected layers), we aim to further validate and interpret the results through the following steps. First, we will refine the training pipeline by implementing a three-way data split with proportions of 64\% for training, 16\% for validation, and 20\% for testing. Additionally, we will incorporate 5-fold cross-validation to assess the robustness and generalizability of each model and reduce the risk of overfitting.
           </p>
+          <p> 
+            To enhance biological interpretability—particularly in the context of brain cancer metastasis—we will move beyond reliance on canonical markers to identify cell clusters. Specifically, we plan to investigate feature importance using tree-based models (Random Forest and XGBoost) in conjunction with SHAP (SHapley Additive exPlanations) analysis. This approach will enable us not only to rank predictive features but also to understand the directionality and contribution of each feature in determining cell identity.
+          </p>
+          <p>
+            Furthermore, we plan to incorporate Variational Autoencoders (VAEs) to capture latent representations of the gene expression profiles. By learning a compressed, probabilistic embedding of the transcriptomic landscape, VAEs can uncover underlying biological structure and heterogeneity among cells. We will compare the latent space learned by VAEs with that derived from PCA or UMAP to assess its utility for clustering and classification, as well as its potential to improve model interpretability and performance in downstream tasks.
+          </p>
+
+
+          <h4>Feature Importance Analysis</h4>
+          <p>
+            To interpret the internal decision-making process of our supervised models, we analyzed feature importance across Random Forest (RF) and XGBoost (XGB) classifiers trained on the PCA-reduced scRNA-seq dataset. We focused on two global importance metrics:
+          </p>
+
+          <ul>
+            <li><strong>Gain (Random Forest)</strong>: Measures how much a feature improves the purity (reduces entropy) of splits. Higher gain indicates stronger predictive contribution.</li>
+            <li><strong>F-score (XGBoost)</strong>: Measures how frequently a feature is used to split nodes across trees. Higher F-score suggests more consistent usage across the ensemble.</li>
+          </ul>
+
+          <p>
+            Both models consistently highlighted <strong>PC_2</strong> as the most predictive feature:
+          </p>
+
+          <ul>
+            <li><strong>RF Gain</strong>: PC_2 contributed the highest (~0.32), followed by PC_1 (~0.14) and PC_4 (~0.12). Other components had sharply diminished contributions.</li>
+            <li><strong>XGB F-score</strong>: PC_2 was used in over 365 splits, with PC_4 (~100) and PC_1 (~55) following. The frequency of other features dropped dramatically.</li>
+          </ul>
+
+          <p>
+            The agreement between RF and XGB in identifying PC_2, PC_1, and PC_4 as top features suggests a stable underlying structure in the data, with a few principal components capturing most of the predictive signal. These PCs likely encode key transcriptional programs distinguishing cell types. Further interpretation using SHAP analysis will help disentangle the directionality and contextual effects of these features.
+          </p>
+
+
+          <h4>SHAP Interpretability by Cell Type</h4>
+
+          <p>
+          To further interpret model predictions at the cell-type level, we used SHAP (SHapley Additive exPlanations) to analyze Random Forest classifiers trained to distinguish each major cell type in the scRNA-seq dataset. SHAP summary plots provide insights into both the magnitude and directionality of each feature’s contribution across individual predictions.
+          </p>
+          
+          <p><strong>Key observations:</strong></p>
+          
+          <ul>
+            <li><strong>Endothelial Cells:</strong> PC_8 and PC_7 showed the strongest directional contributions. High PC_8 values (red) strongly increased prediction confidence, while low PC_7 values (blue) also contributed positively. PC_2 and PC_1 had mixed-direction effects, suggesting their influence depends on feature combinations.</li>
+            <li><strong>Fibroblasts:</strong> PC_2, PC_1, and PC_4 dominated prediction influence. All three showed strong magnitude and directional consistency. PC_3 and PC_8 contributed moderately.</li>
+            <li><strong>Immune Cells:</strong> SHAP values for PC_2, PC_1, and PC_4 were highly influential, similar to fibroblasts. Additional moderate contributions came from PC_3, PC_6, and PC_5.</li>
+            <li><strong>Mast Cells:</strong> PC_2, PC_4, PC_3, and PC_1 remained dominant. Notably, PC_19 and PC_14 showed higher contributions here than in other cell types.</li>
+            <li><strong>Other Cells:</strong> Feature contributions were more evenly distributed. PC_4 and PC_1 had the strongest influence, followed by PC_3, PC_8, and PC_2. Lesser PCs showed minimal but nonzero effect.</li>
+          </ul>
+
+          <p>
+          These results highlight that while some principal components (e.g., PC_2, PC_1, PC_4) consistently influence classification across all cell types, others (e.g., PC_8, PC_19, PC_14) may exert more context-specific effects. The directional contributions revealed by SHAP enable a deeper understanding of how latent transcriptional signals differentiate cell identities within the model.
+          </p>
+
+          <h4>SHAP Aggregation and Model Agreement</h4>
+
+          <p>
+          To synthesize feature importance across all predicted cell types, we computed mean absolute SHAP values (mean |SHAP|) for each principal component and visualized their cumulative contributions across all five cell type classes. These stacked bar plots allow us to assess the global influence of each feature as well as how consistently it contributes across cell types.
+          </p>
+          
+          <p><strong>Key observations:</strong></p>
+          <ul>
+            <li><strong>Both models</strong> exhibit a consistent ranking of the top four features: <strong>PC_2</strong>, <strong>PC_1</strong>, <strong>PC_4</strong>, and <strong>PC_3</strong>. This suggests that ensemble method differences (bagging vs. boosting) do not substantially alter which features are deemed most informative.</li>
+            <li><strong>PC_2</strong> had the largest overall contribution in both models, dominated by immune and fibroblast cell classifications.</li>
+            <li><strong>PC_1</strong> and <strong>PC_4</strong> show more balanced contributions across classes, especially in the XGBoost model.</li>
+            <li>Compared to RF, the XGB SHAP bars are more evenly distributed across cell types, suggesting a smoother integration of features into the decision function.</li>
+            <li>Lower-ranked PCs (e.g., PC_10 to PC_16) have minimal yet detectable influence, with a long tail of small contributions across different cell types.</li>
+          </ul>
+          
+          <p>
+          This convergence in feature ranking across models and the complementary distribution across cell types reinforce the stability and biological relevance of the top PCs. These features likely represent transcriptional axes that robustly differentiate immune, stromal, and rare cell populations across the scRNA-seq dataset.
+          </p>
+          
+          <h4>XGBoost SHAP Interpretability by Cell Type</h4>
+          
+          <p>
+          To compare cell-type-specific prediction mechanisms across models, we examined SHAP beeswarm plots for the XGBoost classifier trained on the PCA-reduced scRNA-seq dataset. These plots display how individual feature values (principal components) influence the model's predicted probability for each cell type. The color encodes the relative magnitude of each PC (blue = low, red = high), and the horizontal spread indicates the impact of those values on prediction outcomes.
+          </p>
+          
+          <p><strong>Key observations:</strong></p>
+          <ul>
+            <li><strong>Endothelial Cells:</strong> PC_8 and PC_7 showed the most polarized effects. High PC_8 values and low PC_7 values drove prediction positively. PC_2 and PC_6 also contributed moderately with bidirectional effects.</li>
+            <li><strong>Fibroblasts:</strong> PC_2, PC_1, and PC_4 remained the dominant drivers of prediction. PC_2 had symmetric effects across a wide SHAP range, while PC_3 and PC_6 added context-specific variation.</li>
+            <li><strong>Immune Cells:</strong> PC_2 and PC_1 again dominated. PC_4 and PC_3 were also highly active. Together, these top four components explained most of the immune cell classification variance.</li>
+            <li><strong>Mast Cells:</strong> PC_2, PC_4, and PC_3 were the strongest contributors. PC_19 and PC_14 contributed more prominently here than in other classes, similar to the RF model.</li>
+            <li><strong>Other Cells:</strong> Feature contributions were more diffusely distributed. PC_4, PC_1, and PC_3 had the greatest impact, but PC_8, PC_2, and PC_6 also played a moderate role. This suggests a broader set of features are needed to classify heterogeneous "other" cells.</li>
+          </ul>
+
+          <h4>Biological Interpretation of Principal Components</h4>
+
+          <p>
+          While the PCA components used in classification are statistical constructs, they represent linear combinations of gene expression profiles. To assess biological plausibility, we identified the top three genes contributing to each of the top three principal components (PC_1–PC_3) and PANTHER Classification System [21] and UniProt Knowledgebase [22].
+          </p>
+          
+          <ul>
+            <li><strong>PC_1 (GPC6, THSD4, UNC5C):</strong>
+              <ul>
+                <li><em>GPC6:</em> Involved in Wnt signaling, tissue morphogenesis, and oncogenesis.</li>
+                <li><em>THSD4:</em> Participates in extracellular matrix organization and angiogenesis.</li>
+                <li><em>UNC5C:</em> A netrin receptor involved in axon guidance and apoptotic signaling.</li>
+              </ul>
+            </li>
+            <li><strong>PC_2 (ROBO2, CACNA2D1, CADPS):</strong>
+              <ul>
+                <li><em>ROBO2:</em> Critical for axon guidance and cell migration.</li>
+                <li><em>CACNA2D1:</em> Encodes a calcium channel subunit essential in neurotransmission and muscle contraction.</li>
+                <li><em>CADPS:</em> Regulates secretory granule exocytosis in neurons and endocrine cells.</li>
+              </ul>
+            </li>
+            <li><strong>PC_3 (SKAP1, CD2, CD96):</strong>
+              <ul>
+                <li><em>SKAP1:</em> Modulates T-cell receptor signaling and cytoskeletal dynamics.</li>
+                <li><em>CD2:</em> A surface molecule for T-cell adhesion and signaling.</li>
+                <li><em>CD96:</em> Regulates immune interactions between NK and T cells.</li>
+              </ul>
+            </li>
+          </ul>
+          
+          <p>
+          These findings validate that our model’s most influential components are biologically interpretable and correspond to known mechanisms in immune modulation, development, and secretion.
+          </p>
+
+
+          <h4>Model Evaluation and Comparison</h4>
+
+          <p>
+          We evaluated both Random Forest and XGBoost classifiers using 5-fold cross-validation and held-out test set performance on the PCA-reduced scRNA-seq dataset. Each model was assessed using accuracy, precision, recall, and F1-score, with particular attention to class-level performance.
+          </p>
+          
+          <p><strong>Cross-validation and test set accuracy:</strong></p>
+          <ul>
+            <li><strong>Random Forest:</strong> Achieved a 5-fold CV mean accuracy of <strong>98.63%</strong>, with a final test accuracy of <strong>98.70%</strong>. Performance was stable across folds, indicating minimal variance across data splits. However, class-specific recall revealed a performance dip in class 3 (recall = 0.86), suggesting that non-fibroblast cells in this category were more difficult to classify correctly.</li>
+            <li><strong>XGBoost:</strong> Demonstrated superior performance, with all 5-fold CV scores exceeding <strong>99%</strong> and a mean CV accuracy of <strong>99.21%</strong>. The test accuracy closely matched at <strong>99.23%</strong>, confirming strong generalization.</li>
+          </ul>
+          
+          <table border="1" cellpadding="6" cellspacing="0">
+            <caption><strong>Classification metrics from Random Forest evaluated on the test set.</strong> While overall accuracy and weighted averages are high (0.99), class 3 showed the lowest recall (0.82), indicating more frequent misclassification.</caption>
+            <thead>
+              <tr>
+                <th>Random Forest</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>Support</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0</td><td>1.00</td><td>0.94</td><td>0.97</td><td>156</td></tr>
+              <tr><td>1</td><td>0.99</td><td>0.99</td><td>0.99</td><td>6325</td></tr>
+              <tr><td>2</td><td>0.99</td><td>0.99</td><td>0.99</td><td>6535</td></tr>
+              <tr><td>3</td><td>0.91</td><td>0.82</td><td>0.86</td><td>269</td></tr>
+              <tr><td>4</td><td>1.00</td><td>0.98</td><td>0.99</td><td>1246</td></tr>
+              <tr><td><strong>Accuracy</strong></td><td colspan="3"><strong>0.99</strong></td><td>14531</td></tr>
+              <tr><td><strong>Macro Avg</strong></td><td>0.98</td><td>0.95</td><td>0.96</td><td>14531</td></tr>
+              <tr><td><strong>Weighted Avg</strong></td><td>0.99</td><td>0.99</td><td>0.99</td><td>14531</td></tr>
+            </tbody>
+          </table>
+          
+          <br>
+          
+          <table border="1" cellpadding="6" cellspacing="0">
+            <caption><strong>Classification metrics from XGBoost evaluated on the test set.</strong> The model achieved strong generalization with all metrics exceeding 0.90 across classes. Class 3, while still the lowest, showed improved recall and F1-score compared to the Random Forest.</caption>
+            <thead>
+              <tr>
+                <th>XGBoost</th>
+                <th>Precision</th>
+                <th>Recall</th>
+                <th>F1-Score</th>
+                <th>Support</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>0</td><td>1.00</td><td>0.99</td><td>0.99</td><td>156</td></tr>
+              <tr><td>1</td><td>0.99</td><td>0.99</td><td>0.99</td><td>6325</td></tr>
+              <tr><td>2</td><td>0.99</td><td>0.99</td><td>0.99</td><td>6536</td></tr>
+              <tr><td>3</td><td>0.92</td><td>0.90</td><td>0.91</td><td>269</td></tr>
+              <tr><td>4</td><td>1.00</td><td>0.99</td><td>1.00</td><td>1245</td></tr>
+              <tr><td><strong>Accuracy</strong></td><td colspan="3"><strong>0.99</strong></td><td>14531</td></tr>
+              <tr><td><strong>Macro Avg</strong></td><td>0.98</td><td>0.97</td><td>0.98</td><td>14531</td></tr>
+              <tr><td><strong>Weighted Avg</strong></td><td>0.99</td><td>0.99</td><td>0.99</td><td>14531</td></tr>
+            </tbody>
+          </table>
+          
+          <p>
+          While both models performed well, XGBoost consistently outperformed Random Forest across nearly all metrics. Its higher test accuracy and more stable per-class recall, especially on harder-to-classify samples like class 3, indicate that boosting better captures subtle decision boundaries in high-dimensional PCA space. Given these results, we selected XGBoost as the final model for SHAP interpretability and downstream analysis.
+          </p>
+
+          
+          
           
           <!-- ===================================================== -->
           <!--  REFERENCES                                           -->
           <!-- ===================================================== -->
           <h3>References</h3>
           <ol>
-            <li>Madhavi Botlagunta, Madhuri D. Botlagunta, Madhu B. Myneni, Devi Lakshmi, Anusha Nayyar, Joga Singh Gullapalli, and Mohammed Atef Shah, “Classification and diagnostic prediction of breast cancer metastasis on clinical data using machine learning algorithms,” <em>Scientific Reports</em>, vol.&nbsp;13, no.&nbsp;1, p.&nbsp;485, January 2023.</li>
-            <li>Burak Yagin, Ozkan Aydogdu, Ali Sahin Tas, et al., “Cancer metastasis prediction and genomic biomarker identification through machine learning and explainable artificial intelligence in breast cancer research,” <em>Diagnostics</em>, vol.&nbsp;13, no.&nbsp;21, p.&nbsp;3314, October 2023.</li>
-            <li>Hao Duan, Yiming Zhang, Qian Zhang, et al., “Machine learning-based prediction model for distant metastasis of breast cancer,” <em>Computers in Biology and Medicine</em>, vol.&nbsp;169, p.&nbsp;107943, January 2024.</li>
-            <li>Azadeh Talebi, Reza Iranpour, Mehdi Dehghani, et al., “Predicting metastasis in gastric cancer patients: machine learning-based approaches,” <em>Scientific Reports</em>, vol.&nbsp;13, no.&nbsp;1, p.&nbsp;4163, December 2023.</li>
-            <li>Reza Talebi, Azadeh Talebi, Reza Iranpour, et al., “Machine learning-based classifiers to predict metastasis in colorectal cancer patients,” <em>Frontiers in Artificial Intelligence</em>, vol.&nbsp;7, p.&nbsp;1285037, January 2024.</li>
-            <li>Oluwaseun O. Petinrin, Hemanth N. Kandala, Oluwatoyin M. Oyeleye, and Halimat B. Oyedotun, “Machine learning in metastatic cancer research: potentials, possibilities, and prospects,” <em>Computational and Structural Biotechnology Journal</em>, vol.&nbsp;21, pp.&nbsp;2454–2470, March 2023.</li>
-            <li>Sarah Albaradei, Turki Turki, and Mansour Aldawsari, “Machine learning and deep learning methods that use omics data for metastasis prediction,” <em>Computational and Structural Biotechnology Journal</em>, vol.&nbsp;19, pp.&nbsp;5008–5018, September 2021.</li>
-            <li>Jianjing Gao, Benjamin A. Hendrickson, Kenneth W. Kinzler, et al., “Integrative analysis of complex cancer genomics and clinical profiles using the cBioPortal,” <em>Science Signaling</em>, vol.&nbsp;6, no.&nbsp;269, p.&nbsp;pl1, 2013.</li>
-            <li>Martin Rudin and Ralph Weissleder, “Molecular imaging in drug discovery and development,” <em>Nature Reviews Drug Discovery</em>, vol.&nbsp;2, no.&nbsp;2, pp.&nbsp;123–131, February 2003.</li>
-            <li>The Broad Institute, “MSigDB: Molecular Signatures Database,” Available: <a href="https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp">https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp</a> (accessed 13 June 2025).</li>
-            <li>Debraj Sengupta and Guillaume Pratx, “Imaging metabolic heterogeneity in cancer,” <em>Molecular Cancer</em>, vol.&nbsp;15, article 4, 2016.</li>
-            <li>Benjamin Nguyen, Jiayin Cheng, Yiqun Zhou, et al., “Genomic characterization of metastatic patterns from prospective clinical sequencing of 25 000 patients,” <em>Cell</em>, vol.&nbsp;185, no.&nbsp;3, pp.&nbsp;563–575.e11, February 2022.</li>
-            <li>Yu Sun, Zhaokai Zhang, Xin Liang, et al., “Integrated multi-omics profiling to dissect the spatiotemporal evolution of metastatic hepatocellular carcinoma,” <em>Cancer Cell</em>, vol.&nbsp;42, no.&nbsp;1, pp.&nbsp;135–156.e17, January 2024.</li>
-            <li>Xiaoyu Zhang, Kailin Xiao, Yu Wen, et al., “Multi-omics with dynamic network biomarker algorithm prefigures organ-specific metastasis of lung adenocarcinoma,” <em>Nature Communications</em>, vol.&nbsp;15, article 9855, 2024.</li>
-            <li>Cristina Caballero, Anne Irrthum, Theano Goulioti, et al., “International research to address the challenges of metastatic breast cancer: the AURORA Program (BIG 14-01),” <em>NPJ Breast Cancer</em>, vol.&nbsp;9, article 42, 2023.</li>
-            <li>Michael L. Ludwig, Dana Moline, Alexander Horrmann, et al., “Integrated multi-omics assessment of lineage plasticity in a prostate cancer patient with brain and dural metastases,” <em>NPJ Precision Oncology</em>, vol.&nbsp;8, article 215, 2024.</li>
-            <li>Dina Akhoundova, Raffaele Bisperi, Julia Salm, et al., “Clinical application of advanced multi-omics tumor profiling: shaping precision oncology of the future,” <em>Cancer Cell</em>, vol.&nbsp;40, no.&nbsp;9, pp.&nbsp;920–938, September 2022.</li>
-            <li>Jinzhou Zhou, Xia Lu, Wei Chang, Chunlei Wan, Xianjun Lu, Changju Zhang, and Shanshan Cao, “PLUS: Predicting cancer metastasis potential based on positive and unlabeled learning,” <em>PLOS Computational Biology</em>, vol.&nbsp;18, no.&nbsp;3, e1009956, March 2022.</li>
-            <li>Scikit-learn developers, “sklearn.ensemble.RandomForestClassifier,” Scikit-learn Documentation, https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html. Accessed: Jul. 7, 2025.</li>
-            <li>Scikit-learn developers, “sklearn.neural\_network.MLPClassifier,” scikit-learn: Machine Learning in Python, [Online]. Available: \url{https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html}. [Accessed: Jul. 7, 2025].</li>
+            <li>M. Botlagunta et al., “Classification and diagnostic prediction of breast cancer metastasis on clinical data using machine learning algorithms,” <em>Sci. Rep.</em>, vol. 13, no. 1, p. 485, Jan. 2023.</li>
+            <li>B. Yagin et al., “Cancer metastasis prediction and genomic biomarker identification through machine learning and eXplainable artificial intelligence in breast cancer research,” <em>Diagnostics</em>, vol. 13, no. 21, p. 3314, Oct. 2023.</li>
+            <li>H. Duan et al., “Machine learning-based prediction model for distant metastasis of breast cancer,” <em>Comput. Biol. Med.</em>, vol. 169, p. 107943, Jan. 2024.</li>
+            <li>A. Talebi et al., “Predicting metastasis in gastric cancer patients: machine learning-based approaches,” <em>Sci. Rep.</em>, vol. 13, no. 1, p. 4163, Dec. 2023.</li>
+            <li>R. Talebi et al., “Machine learning-based classifiers to predict metastasis in colorectal cancer patients,” <em>Front. Artif. Intell.</em>, vol. 7, p. 1285037, Jan. 2024.</li>
+            <li>O. O. Petinrin et al., “Machine learning in metastatic cancer research: Potentials, possibilities, and prospects,” <em>Comput. Struct. Biotechnol. J.</em>, vol. 21, pp. 2454–2470, Mar. 2023.</li>
+            <li>S. Albaradei et al., “Machine learning and deep learning methods that use omics data for metastasis prediction,” <em>Comput. Struct. Biotechnol. J.</em>, vol. 19, pp. 5008–5018, Sep. 2021.</li>
+            <li>J. Gao et al., "Integrative analysis of complex cancer genomics and clinical profiles using the cBioPortal," <em>Sci. Signal.</em>, vol. 6, no. 269, p. pl1, 2013.</li>
+            <li>M. Rudin and R. Weissleder, “Molecular imaging in drug discovery and development,” <em>Nat. Rev. Drug Discov.</em>, vol. 2, no. 2, pp. 123–131, Feb. 2003.</li>
+            <li>The Broad Institute, "MSigDB: Molecular Signatures Database," [Online]. Available: <a href="https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp">https://www.gsea-msigdb.org/gsea/msigdb/human/collections.jsp</a>. [Accessed: Jun. 13, 2025].</li>
+            <li>D. Sengupta and G. Pratx, “Imaging metabolic heterogeneity in cancer,” <em>Mol. Cancer</em>, vol. 15, Art. no. 4, 2016.</li>
+            <li>B. Nguyen et al., "Genomic characterization of metastatic patterns from prospective clinical sequencing of 25,000 patients," <em>Cell</em>, vol. 185, no. 3, pp. 563–575.e11, Feb. 2022, doi: 10.1016/j.cell.2022.01.003.</li>
+            <li>Y. Sun et al., "Integrated multi-omics profiling to dissect the spatiotemporal evolution of metastatic hepatocellular carcinoma," <em>Cancer Cell</em>, vol. 42, no. 1, pp. 135–156.e17, Jan. 2024.</li>
+            <li>X. Zhang, K. Xiao, Y. Wen et al., "Multi-omics with dynamic network biomarker algorithm prefigures organ-specific metastasis of lung adenocarcinoma," <em>Nature Communications</em>, vol. 15, no. 1, article 9855, 2024.</li>
+            <li>C. Caballero et al., "International research to address the challenges of metastatic breast cancer: the AURORA Program (BIG 14-01)," <em>NPJ Breast Cancer</em>, vol. 9, article 42, 2023.</li>
+            <li>M. L. Ludwig et al., "Integrated multi-omics assessment of lineage plasticity in a prostate cancer patient with brain and dural metastases," <em>NPJ Precision Oncology</em>, vol. 8, article 215, 2024.</li>
+            <li>D. Akhoundova et al., "Clinical application of advanced multi-omics tumor profiling: Shaping precision oncology of the future," <em>Cancer Cell</em>, vol. 40, no. 9, pp. 920–938, Sep. 2022.</li>
+            <li>J. Zhou et al., “PLUS: Predicting cancer metastasis potential based on positive and unlabeled learning,” <em>PLoS Comput. Biol.</em>, vol. 18, no. 3, e1009956, Mar. 2022. doi: 10.1371/journal.pcbi.1009956.</li>
+            <li>scikit-learn developers, “sklearn.ensemble.RandomForestClassifier,” <em>Scikit-learn Documentation</em>, <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a>. Accessed: Jul. 7, 2025.</li>
+            <li>Scikit-learn developers, “sklearn.neural_network.MLPClassifier,” <em>scikit-learn: Machine Learning in Python</em>, [Online]. Available: <a href="https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html</a>. [Accessed: Jul. 7, 2025].</li>
+            <li>H. Mi et al., “PANTHER: Making genome-scale phylogenetics accessible to all,” <em>Nucleic Acids Research</em>, vol. 47, no. D1, pp. D419–D426, 2019.</li>
+            <li>The UniProt Consortium, “UniProt: The Universal Protein Knowledgebase in 2023,” <em>Nucleic Acids Research</em>, vol. 51, no. D1, pp. D523–D531, 2023.</li>
           </ol>
+
 
 
           <h3>Individual Contributions</h3>
