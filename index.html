@@ -712,9 +712,9 @@ and predictive modeling.
             <li><strong>Random Forest:</strong> Achieved a 5-fold CV mean accuracy of <strong>98.63%</strong>, with a final test accuracy of <strong>98.70%</strong>. Performance was stable across folds, indicating minimal variance across data splits. However, class-specific recall revealed a performance dip in class 3 (recall = 0.86), suggesting that non-fibroblast cells in this category were more difficult to classify correctly.</li>
             <li><strong>XGBoost:</strong> Demonstrated superior performance, with all 5-fold CV scores exceeding <strong>99%</strong> and a mean CV accuracy of <strong>99.21%</strong>. The test accuracy closely matched at <strong>99.23%</strong>, confirming strong generalization.</li>
           </ul>
-          
+
           <table border="1" cellpadding="6" cellspacing="0">
-            <caption><strong>Classification metrics from Random Forest evaluated on the test set.</strong> While overall accuracy and weighted averages are high (0.99), class 3 showed the lowest recall (0.82), indicating more frequent misclassification.</caption>
+            <caption><strong>Classification metrics for Random Forest evaluated on the test set</strong></caption>
             <thead>
               <tr>
                 <th>Random Forest</th>
@@ -730,16 +730,19 @@ and predictive modeling.
               <tr><td>2</td><td>0.99</td><td>0.99</td><td>0.99</td><td>6535</td></tr>
               <tr><td>3</td><td>0.91</td><td>0.82</td><td>0.86</td><td>269</td></tr>
               <tr><td>4</td><td>1.00</td><td>0.98</td><td>0.99</td><td>1246</td></tr>
+            </tbody>
+            <tfoot>
               <tr><td><strong>Accuracy</strong></td><td>-</td><td>-</td><td><strong>0.99</strong></td><td>14531</td></tr>
               <tr><td><strong>Macro Avg</strong></td><td>0.98</td><td>0.95</td><td>0.96</td><td>14531</td></tr>
               <tr><td><strong>Weighted Avg</strong></td><td>0.99</td><td>0.99</td><td>0.99</td><td>14531</td></tr>
-            </tbody>
+            </tfoot>
           </table>
-          
-          <br>
+
+
+
           
           <table border="1" cellpadding="6" cellspacing="0">
-            <caption><strong>Classification metrics from XGBoost evaluated on the test set.</strong> The model achieved strong generalization with all metrics exceeding 0.90 across classes. Class 3, while still the lowest, showed improved recall and F1-score compared to the Random Forest.</caption>
+            <caption><strong>Classification metrics for XGBoost evaluated on the test set</strong></caption>
             <thead>
               <tr>
                 <th>XGBoost</th>
@@ -755,12 +758,15 @@ and predictive modeling.
               <tr><td>2</td><td>0.99</td><td>0.99</td><td>0.99</td><td>6536</td></tr>
               <tr><td>3</td><td>0.92</td><td>0.90</td><td>0.91</td><td>269</td></tr>
               <tr><td>4</td><td>1.00</td><td>0.99</td><td>1.00</td><td>1245</td></tr>
+            </tbody>
+            <tfoot>
               <tr><td><strong>Accuracy</strong></td><td>-</td><td>-</td><td><strong>0.99</strong></td><td>14531</td></tr>
               <tr><td><strong>Macro Avg</strong></td><td>0.98</td><td>0.97</td><td>0.98</td><td>14531</td></tr>
               <tr><td><strong>Weighted Avg</strong></td><td>0.99</td><td>0.99</td><td>0.99</td><td>14531</td></tr>
-            </tbody>
+            </tfoot>
           </table>
           
+          <br>
           <p>
           While both models performed well, XGBoost consistently outperformed Random Forest across nearly all metrics. Its higher test accuracy and more stable per-class recall, especially on harder-to-classify samples like class 3, indicate that boosting better captures subtle decision boundaries in high-dimensional PCA space. Given these results, we selected XGBoost as the final model for SHAP interpretability and downstream analysis.
           </p>
